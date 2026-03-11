@@ -13,7 +13,19 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        minecraft: ['"Press Start 2P"', 'monospace'],
+        'minecraft-body': ['"VT323"', 'monospace'],
+      },
       colors: {
+        'inventory-slot': 'hsl(var(--inventory-slot))',
+        'inventory-slot-hover': 'hsl(var(--inventory-slot-hover))',
+        gold: 'hsl(var(--gold))',
+        diamond: 'hsl(var(--diamond))',
+        emerald: 'hsl(var(--emerald))',
+        stone: 'hsl(var(--stone))',
+        dirt: 'hsl(var(--dirt))',
+        grass: 'hsl(var(--grass))',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
