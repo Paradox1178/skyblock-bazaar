@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ItemCard from '@/components/ItemCard';
@@ -15,39 +14,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-background">
-        <div className="container mx-auto px-4 py-12 text-center relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-3">
-            Cytooxien Skyblock <span className="text-primary">Marktplatz</span>
+      {/* Hero Banner - Minecraft Grass/Dirt style */}
+      <section className="relative overflow-hidden mc-stone-panel">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/30 to-transparent" />
+        <div className="container mx-auto px-4 py-14 text-center relative z-10">
+          <h1 className="font-pixel text-xl sm:text-2xl text-primary-foreground mb-4 drop-shadow-[2px_2px_0_rgba(0,0,0,0.6)]">
+            ⛏️ CytoMarkt
           </h1>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-6">
-            Finde die besten Preise, vergleiche Shops und trage dein eigenes Angebot ein — alles für Skyblock auf Cytooxien.
+          <p className="text-lg font-bold text-primary-foreground/90 max-w-xl mx-auto mb-6 drop-shadow-[1px_1px_0_rgba(0,0,0,0.4)]">
+            Finde die besten Preise & Shops für Cytooxien Skyblock
           </p>
           <div className="flex gap-3 justify-center">
-            <button onClick={() => navigate('/items')} className="btn-accent text-base px-6 py-3">
+            <button onClick={() => navigate('/items')} className="mc-btn-primary text-base px-6 py-3 font-pixel text-[10px]">
               Items durchsuchen
             </button>
-            <button onClick={() => navigate('/submit')} className="px-6 py-3 rounded-lg font-bold text-sm border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+            <button onClick={() => navigate('/submit')} className="mc-btn text-base px-6 py-3 font-pixel text-[10px]">
               Shop eintragen
             </button>
           </div>
         </div>
-        {/* Decorative blocks */}
-        <div className="absolute top-4 left-8 text-5xl opacity-10 rotate-12">⛏️</div>
-        <div className="absolute bottom-4 right-12 text-6xl opacity-10 -rotate-12">💎</div>
-        <div className="absolute top-12 right-1/4 text-4xl opacity-10">🏗️</div>
       </section>
 
-      {/* Most Traded / Popular */}
+      {/* Most Traded */}
       <section className="container mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="section-title">Beliebteste Items 🔥</h2>
-          <Link to="/items" className="see-all flex items-center gap-1">
+          <h2 className="mc-section-title">Beliebteste Items 🔥</h2>
+          <Link to="/items" className="mc-see-all flex items-center gap-1">
             ALLE ANZEIGEN <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {popularItems.map(item => (
             <ItemCard key={item.id} item={item} showHot />
           ))}
@@ -57,12 +53,12 @@ const Index = () => {
       {/* New Items */}
       <section className="container mx-auto px-4 pb-12">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="section-title">Neue Items ✨</h2>
-          <Link to="/items" className="see-all flex items-center gap-1">
+          <h2 className="mc-section-title">Neue Items ✨</h2>
+          <Link to="/items" className="mc-see-all flex items-center gap-1">
             ALLE ANZEIGEN <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {newItems.map(item => (
             <ItemCard key={item.id} item={item} />
           ))}

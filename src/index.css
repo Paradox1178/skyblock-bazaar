@@ -6,52 +6,54 @@
 
 @layer base {
   :root {
-    --background: 0 0% 97%;
-    --foreground: 220 20% 20%;
+    --background: 35 20% 92%;
+    --foreground: 220 20% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 20%;
+    --card: 35 15% 96%;
+    --card-foreground: 220 20% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 20%;
+    --popover: 35 15% 96%;
+    --popover-foreground: 220 20% 15%;
 
-    --primary: 152 55% 42%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 100 40% 35%;
+    --primary-foreground: 50 50% 95%;
 
-    --secondary: 210 20% 95%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 35 15% 88%;
+    --secondary-foreground: 220 20% 15%;
 
-    --muted: 210 15% 93%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 35 10% 85%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 0 75% 58%;
+    --accent: 0 75% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 90%;
-    --input: 210 15% 90%;
-    --ring: 152 55% 42%;
+    --border: 30 15% 78%;
+    --input: 30 12% 82%;
+    --ring: 100 40% 35%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;
 
-    /* Custom */
-    --nav: 152 55% 42%;
-    --nav-foreground: 0 0% 100%;
-    --hot-badge: 0 75% 58%;
-    --price-green: 152 55% 42%;
-    --category-bg: 210 20% 96%;
-    --category-active: 152 55% 42%;
+    /* Minecraft custom */
+    --mc-dirt: 25 35% 30%;
+    --mc-grass: 100 50% 35%;
+    --mc-stone: 0 0% 55%;
+    --mc-gold: 45 90% 55%;
+    --mc-slot-bg: 35 12% 50%;
+    --mc-slot-border-light: 35 15% 65%;
+    --mc-slot-border-dark: 35 15% 30%;
+    --mc-inventory-bg: 30 12% 72%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 20% 20%;
-    --sidebar-primary: 152 55% 42%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 95%;
-    --sidebar-accent-foreground: 220 20% 20%;
-    --sidebar-border: 210 15% 90%;
-    --sidebar-ring: 152 55% 42%;
+    --sidebar-background: 35 15% 94%;
+    --sidebar-foreground: 220 20% 15%;
+    --sidebar-primary: 100 40% 35%;
+    --sidebar-primary-foreground: 50 50% 95%;
+    --sidebar-accent: 35 15% 88%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 30 15% 78%;
+    --sidebar-ring: 100 40% 35%;
   }
 }
 
@@ -63,90 +65,206 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Nunito', sans-serif;
+    image-rendering: auto;
   }
 }
 
 @layer components {
-  .nav-bar {
-    background: hsl(var(--nav));
-    color: hsl(var(--nav-foreground));
+  /* Minecraft dirt-textured navbar */
+  .mc-navbar {
+    background-color: hsl(var(--mc-dirt));
+    background-image: url('/images/dirt-texture.png');
+    background-size: 64px 64px;
+    image-rendering: pixelated;
+    border-bottom: 4px solid hsl(var(--mc-grass));
   }
 
-  .hot-badge {
-    background: hsl(var(--hot-badge));
-    color: white;
-    @apply text-xs font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wide;
+  /* Minecraft inventory-style card */
+  .mc-inventory-card {
+    background-color: hsl(var(--mc-inventory-bg));
+    border: 3px solid;
+    border-top-color: hsl(var(--mc-slot-border-light));
+    border-left-color: hsl(var(--mc-slot-border-light));
+    border-bottom-color: hsl(var(--mc-slot-border-dark));
+    border-right-color: hsl(var(--mc-slot-border-dark));
+    @apply p-4 flex flex-col items-center gap-2 cursor-pointer transition-all;
   }
 
-  .category-tab {
-    @apply px-4 py-2 text-sm font-semibold rounded-full transition-colors cursor-pointer;
+  .mc-inventory-card:hover {
+    background-color: hsl(35 12% 78%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.2);
+  }
+
+  /* Inventory slot for item image */
+  .mc-item-slot {
+    background-color: hsl(var(--mc-slot-bg));
+    border: 2px solid;
+    border-top-color: hsl(var(--mc-slot-border-dark));
+    border-left-color: hsl(var(--mc-slot-border-dark));
+    border-bottom-color: hsl(var(--mc-slot-border-light));
+    border-right-color: hsl(var(--mc-slot-border-light));
+    @apply w-16 h-16 flex items-center justify-center p-1.5;
+    image-rendering: pixelated;
+  }
+
+  .mc-item-slot img {
+    image-rendering: pixelated;
+    @apply w-full h-full object-contain;
+  }
+
+  /* Minecraft-style panel */
+  .mc-panel {
+    background-color: hsl(var(--mc-inventory-bg));
+    border: 3px solid;
+    border-top-color: hsl(var(--mc-slot-border-light));
+    border-left-color: hsl(var(--mc-slot-border-light));
+    border-bottom-color: hsl(var(--mc-slot-border-dark));
+    border-right-color: hsl(var(--mc-slot-border-dark));
+  }
+
+  /* MC button */
+  .mc-btn {
+    background-color: hsl(var(--mc-inventory-bg));
+    border: 2px solid;
+    border-top-color: hsl(var(--mc-slot-border-light));
+    border-left-color: hsl(var(--mc-slot-border-light));
+    border-bottom-color: hsl(var(--mc-slot-border-dark));
+    border-right-color: hsl(var(--mc-slot-border-dark));
+    @apply px-4 py-2 font-bold text-sm cursor-pointer transition-colors;
     color: hsl(var(--foreground));
-    background: transparent;
+    font-family: 'Nunito', sans-serif;
   }
 
-  .category-tab:hover {
-    background: hsl(var(--category-bg));
+  .mc-btn:hover {
+    background-color: hsl(35 15% 78%);
   }
 
-  .category-tab-active {
-    background: hsl(var(--category-active));
-    color: white;
+  .mc-btn:active {
+    border-top-color: hsl(var(--mc-slot-border-dark));
+    border-left-color: hsl(var(--mc-slot-border-dark));
+    border-bottom-color: hsl(var(--mc-slot-border-light));
+    border-right-color: hsl(var(--mc-slot-border-light));
   }
 
-  .category-tab-active:hover {
-    background: hsl(var(--category-active));
+  .mc-btn-primary {
+    @apply mc-btn;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-top-color: hsl(100 40% 48%);
+    border-left-color: hsl(100 40% 48%);
+    border-bottom-color: hsl(100 40% 22%);
+    border-right-color: hsl(100 40% 22%);
   }
 
-  .item-card {
-    @apply bg-card rounded-xl border border-border p-4 flex flex-col items-center gap-3 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5;
+  .mc-btn-primary:hover {
+    background-color: hsl(100 40% 40%);
   }
 
-  .price-tag {
-    color: hsl(var(--price-green));
-    @apply font-bold;
-  }
-
-  .search-input {
-    @apply w-full px-4 py-2.5 rounded-lg border-none text-sm;
-    background: hsl(0 0% 100% / 0.2);
-    color: hsl(var(--nav-foreground));
-  }
-
-  .search-input::placeholder {
-    color: hsl(0 0% 100% / 0.7);
-  }
-
-  .search-input:focus {
-    outline: none;
-    background: hsl(0 0% 100% / 0.3);
-  }
-
-  .btn-accent {
-    background: hsl(var(--accent));
+  .mc-btn-accent {
+    @apply mc-btn;
+    background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
-    @apply px-4 py-2 rounded-lg font-bold text-sm transition-colors hover:opacity-90;
+    border-top-color: hsl(0 75% 68%);
+    border-left-color: hsl(0 75% 68%);
+    border-bottom-color: hsl(0 75% 38%);
+    border-right-color: hsl(0 75% 38%);
   }
 
-  .btn-outline-light {
-    @apply px-4 py-2 rounded-lg font-semibold text-sm transition-colors border;
-    border-color: hsl(0 0% 100% / 0.5);
-    color: hsl(var(--nav-foreground));
+  .mc-btn-accent:hover {
+    background-color: hsl(0 75% 50%);
   }
 
-  .btn-outline-light:hover {
-    background: hsl(0 0% 100% / 0.15);
+  /* MC input */
+  .mc-input {
+    background-color: hsl(0 0% 0% / 0.35);
+    border: 2px solid;
+    border-top-color: hsl(var(--mc-slot-border-dark));
+    border-left-color: hsl(var(--mc-slot-border-dark));
+    border-bottom-color: hsl(var(--mc-slot-border-light));
+    border-right-color: hsl(var(--mc-slot-border-light));
+    @apply w-full px-3 py-2.5 text-sm;
+    color: hsl(50 50% 95%);
+    font-family: 'Nunito', sans-serif;
   }
 
-  .section-title {
+  .mc-input:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+  }
+
+  .mc-input::placeholder {
+    color: hsl(0 0% 100% / 0.4);
+  }
+
+  /* Category tab */
+  .mc-category {
+    @apply px-3 py-1.5 text-sm font-bold cursor-pointer transition-colors whitespace-nowrap;
+    background-color: hsl(var(--mc-inventory-bg));
+    border: 2px solid;
+    border-top-color: hsl(var(--mc-slot-border-light));
+    border-left-color: hsl(var(--mc-slot-border-light));
+    border-bottom-color: hsl(var(--mc-slot-border-dark));
+    border-right-color: hsl(var(--mc-slot-border-dark));
+    color: hsl(var(--foreground));
+  }
+
+  .mc-category:hover {
+    background-color: hsl(35 15% 78%);
+  }
+
+  .mc-category-active {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-top-color: hsl(100 40% 48%);
+    border-left-color: hsl(100 40% 48%);
+    border-bottom-color: hsl(100 40% 22%);
+    border-right-color: hsl(100 40% 22%);
+  }
+
+  .mc-category-active:hover {
+    background-color: hsl(100 40% 40%);
+  }
+
+  /* HOT badge */
+  .mc-hot-badge {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    @apply text-xs font-extrabold px-2 py-0.5 uppercase tracking-wider;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* Gold price */
+  .mc-price {
+    color: hsl(var(--mc-gold));
+    @apply font-extrabold;
+    text-shadow: 1px 1px 0 hsl(30 60% 25%);
+  }
+
+  /* Section title */
+  .mc-section-title {
     @apply text-xl font-extrabold text-foreground;
   }
 
-  .see-all {
+  .mc-see-all {
     color: hsl(var(--accent));
     @apply text-sm font-bold hover:underline cursor-pointer;
   }
 
-  .mc-pixel {
+  /* Pixel font util */
+  .font-pixel {
     font-family: 'Press Start 2P', monospace;
+  }
+
+  /* Stone panel (for detail page) */
+  .mc-stone-panel {
+    background-image: url('/images/stone-texture.png');
+    background-size: 48px 48px;
+    image-rendering: pixelated;
+    border: 3px solid;
+    border-top-color: hsl(0 0% 68%);
+    border-left-color: hsl(0 0% 68%);
+    border-bottom-color: hsl(0 0% 32%);
+    border-right-color: hsl(0 0% 32%);
   }
 }

@@ -34,52 +34,60 @@ const SubmitShop = () => {
 
   const update = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
-  const fieldClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary";
+  const selectedItem = DEFAULT_ITEMS.find(i => i.id === form.itemId);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
-      <h1 className="section-title text-center mb-2">Shop eintragen 🏪</h1>
+      <h1 className="mc-section-title text-center mb-2">Shop eintragen 🏪</h1>
       <p className="text-muted-foreground text-center text-sm mb-8">
         Teile deinen Shop mit der Cytooxien Skyblock Community
       </p>
 
-      <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-border p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="mc-panel p-6 space-y-5">
+        {selectedItem && (
+          <div className="flex justify-center">
+            <div className="mc-item-slot">
+              <img src={selectedItem.icon} alt={selectedItem.name} />
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Shop Name *</label>
-          <input className={fieldClass} value={form.shopName} onChange={e => update('shopName', e.target.value)} placeholder="z.B. DiamantKönig Shop" />
+          <input className="mc-input" value={form.shopName} onChange={e => update('shopName', e.target.value)} placeholder="z.B. DiamantKönig Shop" />
         </div>
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Spielername *</label>
-          <input className={fieldClass} value={form.ownerName} onChange={e => update('ownerName', e.target.value)} placeholder="Dein Minecraft Name" />
+          <input className="mc-input" value={form.ownerName} onChange={e => update('ownerName', e.target.value)} placeholder="Dein Minecraft Name" />
         </div>
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Item *</label>
-          <select className={fieldClass} value={form.itemId} onChange={e => update('itemId', e.target.value)}>
+          <select className="mc-input" value={form.itemId} onChange={e => update('itemId', e.target.value)}>
             <option value="">Item auswählen...</option>
             {DEFAULT_ITEMS.sort((a, b) => a.name.localeCompare(b.name)).map(item => (
-              <option key={item.id} value={item.id}>{item.icon} {item.name}</option>
+              <option key={item.id} value={item.id}>{item.name}</option>
             ))}
           </select>
         </div>
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Preis (pro Stück) *</label>
-          <input className={fieldClass} type="number" min="0" value={form.price} onChange={e => update('price', e.target.value)} placeholder="z.B. 500" />
+          <input className="mc-input" type="number" min="0" value={form.price} onChange={e => update('price', e.target.value)} placeholder="z.B. 500" />
         </div>
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Warp / Koordinaten</label>
-          <input className={fieldClass} value={form.coordinates} onChange={e => update('coordinates', e.target.value)} placeholder="z.B. /is warp MeinShop" />
+          <input className="mc-input" value={form.coordinates} onChange={e => update('coordinates', e.target.value)} placeholder="z.B. /is warp MeinShop" />
         </div>
 
         <div>
           <label className="block text-sm font-bold text-foreground mb-1.5">Beschreibung</label>
-          <textarea className={`${fieldClass} min-h-[80px] resize-y`} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Weitere Infos zum Shop..." />
+          <textarea className="mc-input min-h-[80px] resize-y" value={form.description} onChange={e => update('description', e.target.value)} placeholder="Weitere Infos zum Shop..." />
         </div>
 
-        <button type="submit" className="btn-accent w-full py-3 text-base">
+        <button type="submit" className="mc-btn-primary w-full py-3 text-base font-pixel text-[10px]">
           ✅ Shop eintragen
         </button>
       </form>
