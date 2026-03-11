@@ -78,8 +78,8 @@ const SubmitShop = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-foreground mb-1.5">Warp / Koordinaten</label>
-          <input className="mc-input" value={form.coordinates} onChange={e => update('coordinates', e.target.value)} placeholder="z.B. /is warp MeinShop" />
+          <label className="block text-sm font-bold text-foreground mb-1.5">Visitname</label>
+          <input className="mc-input" value={form.coordinates} onChange={e => update('coordinates', e.target.value)} placeholder="z.B. /visit Dev_Dave" />
         </div>
 
         <div>

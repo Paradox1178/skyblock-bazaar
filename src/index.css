@@ -70,10 +70,10 @@
 }
 
 @layer components {
+
   /* Minecraft dirt-textured navbar */
   .mc-navbar {
     background-color: hsl(var(--mc-dirt));
-    background-image: url('/images/dirt-texture.png');
     background-size: 64px 64px;
     image-rendering: pixelated;
     border-bottom: 4px solid hsl(var(--mc-grass));
@@ -258,13 +258,31 @@
 
   /* Stone panel (for detail page) */
   .mc-stone-panel {
-    background-image: url('/images/stone-texture.png');
-    background-size: 48px 48px;
-    image-rendering: pixelated;
+    position: relative;
     border: 3px solid;
     border-top-color: hsl(0 0% 68%);
     border-left-color: hsl(0 0% 68%);
     border-bottom-color: hsl(0 0% 32%);
     border-right-color: hsl(0 0% 32%);
+    overflow: hidden;
+    /* wichtig, damit pseudo-element nicht rausragt */
+  }
+
+  .mc-stone-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/stone-texture.png');
+    background-size: 48px 48px;
+    image-rendering: pixelated;
+    filter: blur(3px);
+    /* hier kannst du die Stärke ändern */
+    z-index: 0;
+  }
+
+  .mc-stone-panel>* {
+    position: relative;
+    /* Inhalte über dem Blur */
+    z-index: 1;
   }
 }
