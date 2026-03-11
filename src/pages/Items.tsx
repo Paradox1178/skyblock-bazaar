@@ -1,17 +1,33 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import SearchBar from '@/components/SearchBar';
+import { Search } from 'lucide-react';
 import ItemCard from '@/components/ItemCard';
 import { DEFAULT_ITEMS, CATEGORIES } from '@/data/items';
 
 const Items = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
-  const [category, setCategory] = useState<string>('Alle');
+  const category = searchParams.get('category') || 'Alle';
+
+  const setCategory = (cat: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (cat === 'Alle') {
+      params.delete('category');
+    } else {
+      params.set('category', cat);
+    }
+    setSearchParams(params);
+  };
 
   const handleSearch = (val: string) => {
     setSearch(val);
-    setSearchParams(val ? { q: val } : {});
+    const params = new URLSearchParams(searchParams);
+    if (val) {
+      params.set('q', val);
+    } else {
+      params.delete('q');
+    }
+    setSearchParams(params);
   };
 
   const filtered = useMemo(() => {
@@ -24,33 +40,48 @@ const Items = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="font-minecraft text-sm mc-text-gold mb-6 text-center">📦 Item Katalog</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="section-title">
+          {category !== 'Alle' ? category : 'Alle Items'} 📦
+        </h1>
+        <span className="text-sm text-muted-foreground">{filtered.length} Items</span>
+      </div>
 
-      <SearchBar value={search} onChange={handleSearch} />
+      {/* Search */}
+      <div className="relative max-w-md mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Item suchen..."
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
 
-      {/* Category filter */}
-      <div className="flex flex-wrap gap-1.5 justify-center mt-6 mb-8">
+      {/* Category pills */}
+      <div className="flex flex-wrap gap-2 mb-8">
         {['Alle', ...CATEGORIES].map(cat => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`mc-button text-[9px] ${category === cat ? 'mc-text-gold' : ''}`}
+            className={`category-tab ${category === cat ? 'category-tab-active' : ''}`}
           >
             {cat}
           </button>
         ))}
       </div>
 
-      {/* Results */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filtered.map(item => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard key={item.id} item={item} showHot />
           ))}
         </div>
       ) : (
-        <div className="mc-panel p-8 text-center">
-          <p className="font-minecraft text-xs text-muted-foreground">Keine Items gefunden 😢</p>
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-lg text-muted-foreground">Keine Items gefunden 😢</p>
+          <p className="text-sm text-muted-foreground mt-1">Versuch einen anderen Suchbegriff</p>
         </div>
       )}
     </div>
