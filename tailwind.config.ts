@@ -14,18 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        minecraft: ['"Press Start 2P"', 'monospace'],
-        'minecraft-body': ['"VT323"', 'monospace'],
+        sans: ['"Nunito"', 'sans-serif'],
+        pixel: ['"Press Start 2P"', 'monospace'],
       },
       colors: {
-        'inventory-slot': 'hsl(var(--inventory-slot))',
-        'inventory-slot-hover': 'hsl(var(--inventory-slot-hover))',
-        gold: 'hsl(var(--gold))',
-        diamond: 'hsl(var(--diamond))',
-        emerald: 'hsl(var(--emerald))',
-        stone: 'hsl(var(--stone))',
-        dirt: 'hsl(var(--dirt))',
-        grass: 'hsl(var(--grass))',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -59,6 +51,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        nav: {
+          DEFAULT: "hsl(var(--nav))",
+          foreground: "hsl(var(--nav-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -77,20 +73,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
