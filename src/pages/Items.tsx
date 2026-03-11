@@ -22,11 +22,8 @@ const Items = () => {
   const handleSearch = (val: string) => {
     setSearch(val);
     const params = new URLSearchParams(searchParams);
-    if (val) {
-      params.set('q', val);
-    } else {
-      params.delete('q');
-    }
+    if (val) params.set('q', val);
+    else params.delete('q');
     setSearchParams(params);
   };
 
@@ -41,7 +38,7 @@ const Items = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="section-title">
+        <h1 className="mc-section-title">
           {category !== 'Alle' ? category : 'Alle Items'} 📦
         </h1>
         <span className="text-sm text-muted-foreground">{filtered.length} Items</span>
@@ -55,17 +52,17 @@ const Items = () => {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Item suchen..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mc-input pl-10"
         />
       </div>
 
       {/* Category pills */}
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex flex-wrap gap-1.5 mb-8">
         {['Alle', ...CATEGORIES].map(cat => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`category-tab ${category === cat ? 'category-tab-active' : ''}`}
+            className={`mc-category ${category === cat ? 'mc-category-active' : ''}`}
           >
             {cat}
           </button>
@@ -73,13 +70,13 @@ const Items = () => {
       </div>
 
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {filtered.map(item => (
             <ItemCard key={item.id} item={item} showHot />
           ))}
         </div>
       ) : (
-        <div className="bg-card rounded-xl border border-border p-12 text-center">
+        <div className="mc-panel p-12 text-center">
           <p className="text-lg text-muted-foreground">Keine Items gefunden 😢</p>
           <p className="text-sm text-muted-foreground mt-1">Versuch einen anderen Suchbegriff</p>
         </div>

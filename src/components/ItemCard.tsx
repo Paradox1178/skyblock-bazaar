@@ -6,31 +6,25 @@ interface ItemCardProps {
   showHot?: boolean;
 }
 
-const RARITY_BORDER: Record<string, string> = {
-  common: 'border-border',
-  uncommon: 'border-green-300',
-  rare: 'border-blue-300',
-  epic: 'border-purple-300',
-  legendary: 'border-yellow-300',
-};
-
 const ItemCard = ({ item, showHot }: ItemCardProps) => {
   const avgPrice = getAveragePrice(item.id);
   const lowPrice = getLowestPrice(item.id);
   const shopCount = getItemShops(item.id).length;
 
   return (
-    <Link to={`/items/${item.id}`} className={`item-card relative ${RARITY_BORDER[item.rarity]}`}>
+    <Link to={`/items/${item.id}`} className="mc-inventory-card relative">
       {showHot && shopCount >= 2 && (
-        <span className="hot-badge absolute top-2 left-2">HOT</span>
+        <span className="mc-hot-badge absolute top-1 left-1">HOT</span>
       )}
-      <span className="text-4xl mt-2">{item.icon}</span>
+      <div className="mc-item-slot">
+        <img src={item.icon} alt={item.name} loading="lazy" />
+      </div>
       <span className="font-bold text-sm text-center leading-tight text-card-foreground">
         {item.name}
       </span>
       {avgPrice !== null ? (
         <div className="text-center space-y-0.5">
-          <span className="price-tag text-base">{lowPrice}$</span>
+          <span className="mc-price text-base">{lowPrice}$</span>
           <p className="text-xs text-muted-foreground">
             ⌀ {avgPrice}$ · {shopCount} {shopCount === 1 ? 'Shop' : 'Shops'}
           </p>

@@ -1,7 +1,6 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CATEGORIES } from '@/data/items';
 
 const Navbar = () => {
@@ -19,13 +18,13 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Main Nav */}
-      <div className="nav-bar">
+      {/* Dirt-textured Navbar */}
+      <div className="mc-navbar">
         <div className="container mx-auto flex items-center gap-4 px-4 py-3">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <span className="text-2xl">⛏️</span>
-            <span className="font-pixel text-[10px] text-nav-foreground tracking-wider hidden sm:inline">
+            <span className="font-pixel text-[11px] text-primary-foreground tracking-wider hidden sm:inline drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
               CytoMarkt
             </span>
           </Link>
@@ -36,17 +35,17 @@ const Navbar = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche nach Items..."
-              className="search-input pr-10"
+              placeholder="Item suchen..."
+              className="mc-input pr-10"
             />
-            <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-primary-foreground/20 hover:bg-primary-foreground/30 transition-colors">
+            <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 mc-btn-primary p-1.5">
               <Search className="h-4 w-4" />
             </button>
           </form>
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/submit" className="btn-accent flex items-center gap-1.5">
+            <Link to="/submit" className="mc-btn-accent flex items-center gap-1.5">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Shop eintragen</span>
             </Link>
@@ -55,13 +54,13 @@ const Navbar = () => {
       </div>
 
       {/* Category Tabs */}
-      <div className="bg-card border-b border-border">
+      <div className="mc-panel border-t-0" style={{ borderTop: 'none' }}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
+          <div className="flex items-center gap-1 overflow-x-auto py-2">
             <Link
               to="/items"
-              className={`category-tab whitespace-nowrap ${
-                location.pathname === '/items' && !location.search ? 'category-tab-active' : ''
+              className={`mc-category ${
+                location.pathname === '/items' && !location.search ? 'mc-category-active' : ''
               }`}
             >
               Alle
@@ -70,8 +69,8 @@ const Navbar = () => {
               <Link
                 key={cat}
                 to={`/items?category=${encodeURIComponent(cat)}`}
-                className={`category-tab whitespace-nowrap ${
-                  location.search.includes(cat) ? 'category-tab-active' : ''
+                className={`mc-category ${
+                  location.search.includes(encodeURIComponent(cat)) ? 'mc-category-active' : ''
                 }`}
               >
                 {cat}
