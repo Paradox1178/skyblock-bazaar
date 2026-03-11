@@ -40,3 +40,22 @@
 .read-the-docs {
   color: #888;
 }
+
+@layer components {
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  /* Minecraft Bevel Effect für Buttons & Karten */
+  .mc-inventory-card {
+    image-rendering: pixelated;
+  }
+
+  .mc-item-slot {
+    /* Verhindert Text-Overlay falls Bilder laden */
+    font-size: 0;
+    color: transparent;
+  }
+}
