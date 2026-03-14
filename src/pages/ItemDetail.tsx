@@ -82,30 +82,50 @@ const ItemDetail = () => {
             </div>
           </div>
 
-          {avgPrice !== null && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-              <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
-                <TrendingDown className="h-5 w-5 text-green-500 mb-2" />
-                <span className="text-xl font-bold flex items-center gap-1 text-white">{lowPrice} <TalerIcon className="h-4 w-4" /></span>
-                <p className="text-[10px] uppercase font-black text-green-500 mt-1">Günstigster</p>
-              </div>
-              <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
-                <BarChart3 className="h-5 w-5 text-blue-500 mb-2" />
-                <span className="text-xl font-bold flex items-center gap-1 text-white">{avgPrice} <TalerIcon className="h-4 w-4" /></span>
-                <p className="text-[10px] uppercase font-black text-blue-500 mt-1">Schnitt</p>
-              </div>
-              <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
-                <TrendingUp className="h-5 w-5 text-red-500 mb-2" />
-                <span className="text-xl font-bold flex items-center gap-1 text-white">{highPrice} <TalerIcon className="h-4 w-4" /></span>
-                <p className="text-[10px] uppercase font-black text-red-500 mt-1">Teuerster</p>
-              </div>
-              <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
-                <BarChart3 className="h-5 w-5 text-yellow-500 mb-2" />
-                <span className="text-xl font-bold flex items-center gap-1 text-white">{item.marketPrice || 0} <TalerIcon className="h-4 w-4" /></span>
-                <p className="text-[10px] uppercase font-black text-yellow-500 mt-1">Marktwert</p>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+            {avgPrice !== null ? (
+              <>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <TrendingDown className="h-5 w-5 text-green-500 mb-2" />
+                  <span className="text-xl font-bold flex items-center gap-1 text-white">{lowPrice} <TalerIcon className="h-4 w-4" /></span>
+                  <p className="text-[10px] uppercase font-black text-green-500 mt-1">Günstigster</p>
+                </div>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <BarChart3 className="h-5 w-5 text-blue-500 mb-2" />
+                  <span className="text-xl font-bold flex items-center gap-1 text-white">{avgPrice} <TalerIcon className="h-4 w-4" /></span>
+                  <p className="text-[10px] uppercase font-black text-blue-500 mt-1">Schnitt</p>
+                </div>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <TrendingUp className="h-5 w-5 text-red-500 mb-2" />
+                  <span className="text-xl font-bold flex items-center gap-1 text-white">{highPrice} <TalerIcon className="h-4 w-4" /></span>
+                  <p className="text-[10px] uppercase font-black text-red-500 mt-1">Teuerster</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <TrendingDown className="h-5 w-5 text-gray-600 mb-2" />
+                  <span className="text-xl font-bold text-gray-500">—</span>
+                  <p className="text-[10px] uppercase font-black text-gray-600 mt-1">Günstigster</p>
+                </div>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <BarChart3 className="h-5 w-5 text-gray-600 mb-2" />
+                  <span className="text-xl font-bold text-gray-500">—</span>
+                  <p className="text-[10px] uppercase font-black text-gray-600 mt-1">Schnitt</p>
+                </div>
+                <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+                  <TrendingUp className="h-5 w-5 text-gray-600 mb-2" />
+                  <span className="text-xl font-bold text-gray-500">—</span>
+                  <p className="text-[10px] uppercase font-black text-gray-600 mt-1">Teuerster</p>
+                </div>
+              </>
+            )}
+            <div className="mc-inventory-card bg-black/40 border-[#444] p-4 flex flex-col items-center">
+              <BarChart3 className="h-5 w-5 text-yellow-500 mb-2" />
+              <span className="text-xl font-bold flex items-center gap-1 text-white">{item.marketPrice || 0} <TalerIcon className="h-4 w-4" /></span>
+              <p className="text-[10px] uppercase font-black text-yellow-500 mt-1">Marktwert</p>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Price History */}
