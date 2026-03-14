@@ -216,6 +216,55 @@ const Settings = () => {
           )}
         </div>
 
+        {/* Meine Meldungen */}
+        <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[inset_3px_3px_0px_#3c3c3c] p-8 mb-8">
+          <h2 className="text-xl font-black flex items-center gap-2 mb-6">
+            <MessageSquare className="h-5 w-5 text-yellow-500" /> Meine Meldungen ({feedbacks.length})
+          </h2>
+
+          {feedbackLoading ? (
+            <p className="text-gray-400 animate-pulse text-sm">Lade...</p>
+          ) : feedbacks.length === 0 ? (
+            <p className="text-gray-500 text-sm italic text-center py-4">
+              Du hast noch kein Feedback eingereicht.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {feedbacks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
+                const statusMap: Record<FeedbackStatus, { label: string; color: string }> = {
+                  eingereicht: { label: 'Eingereicht', color: 'text-gray-400 bg-gray-800' },
+                  gesehen: { label: 'Gesehen', color: 'text-blue-400 bg-blue-900/40' },
+                  beantwortet: { label: 'Beantwortet', color: 'text-purple-400 bg-purple-900/40' },
+                  geaendert: { label: 'Geändert', color: 'text-green-400 bg-green-900/40' },
+                  kein_fehler: { label: 'Kein Fehler', color: 'text-orange-400 bg-orange-900/40' },
+                };
+                const s = statusMap[fb.status];
+                const itemName = fb.item_id ? (DEFAULT_ITEMS.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
+                const isNew = fb.status === 'beantwortet' || fb.status === 'geaendert' || fb.status === 'kein_fehler';
+
+                return (
+                  <div key={fb.id} className={`p-4 bg-black/20 border ${isNew && fb.admin_response ? 'border-yellow-600' : 'border-[#333]'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 ${s.color}`}>{s.label}</span>
+                        {itemName && <span className="text-[10px] text-gray-500">📦 {itemName}</span>}
+                      </div>
+                      <span className="text-[10px] text-gray-500">{new Date(fb.created_at).toLocaleDateString('de-DE')}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 mb-2">{fb.message}</p>
+                    {fb.admin_response && (
+                      <div className="p-2 bg-green-900/10 border border-green-900/30 mt-2">
+                        <p className="text-[10px] font-black text-green-500 uppercase mb-1">Antwort:</p>
+                        <p className="text-sm text-green-300">{fb.admin_response}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Save / Logout */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button onClick={saveProfile} disabled={saving} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2 disabled:opacity-50">
