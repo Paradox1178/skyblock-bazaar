@@ -160,13 +160,26 @@ export function getPlayerUnreadFeedbackCount(playerId: number): Promise<{ count:
   return request(`/feedback/player/${playerId}/unread`);
 }
 
-export function replyToFeedback(
+export interface ApiFeedbackMessage {
+  id: number;
+  feedback_id: number;
+  sender_type: 'player' | 'admin';
+  message: string;
+  created_at: string;
+}
+
+export function getFeedbackMessages(feedbackId: number): Promise<ApiFeedbackMessage[]> {
+  return request(`/feedback/${feedbackId}/messages`);
+}
+
+export function sendFeedbackReply(
   feedbackId: number,
-  playerId: number,
-  message: string
+  senderType: 'player' | 'admin',
+  message: string,
+  playerId?: number
 ): Promise<{ success: boolean }> {
   return request(`/feedback/${feedbackId}/reply`, {
     method: 'POST',
-    body: JSON.stringify({ player_id: playerId, message }),
+    body: JSON.stringify({ sender_type: senderType, message, player_id: playerId }),
   });
 }
