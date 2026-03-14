@@ -136,9 +136,16 @@ const Navbar = () => {
                       <Link
                         to="/settings"
                         onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors relative"
+                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors"
                       >
                         <Settings className="h-4 w-4 text-yellow-500" /> Einstellungen
+                      </Link>
+                      <Link
+                        to="/feedback"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors relative border-t border-black/20"
+                      >
+                        <MessageSquare className="h-4 w-4 text-yellow-500" /> Meine Meldungen
                         {unreadCount > 0 && (
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-600 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full">
                             {unreadCount}
