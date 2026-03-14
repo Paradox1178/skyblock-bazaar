@@ -110,3 +110,52 @@ export function recordPriceSnapshot(
     body: JSON.stringify(data),
   });
 }
+
+// === FEEDBACK ===
+
+export type FeedbackStatus = 'eingereicht' | 'gesehen' | 'beantwortet' | 'geaendert' | 'kein_fehler';
+
+export interface ApiFeedback {
+  id: number;
+  player_id: number;
+  player_name: string;
+  item_id: string | null;
+  category: string;
+  message: string;
+  status: FeedbackStatus;
+  admin_response: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function submitFeedback(
+  playerId: number,
+  data: { item_id?: string; category: string; message: string }
+): Promise<{ success: boolean; id: number }> {
+  return request(`/feedback`, {
+    method: 'POST',
+    body: JSON.stringify({ player_id: playerId, ...data }),
+  });
+}
+
+export function getPlayerFeedback(playerId: number): Promise<ApiFeedback[]> {
+  return request(`/feedback/player/${playerId}`);
+}
+
+export function getAllFeedback(): Promise<ApiFeedback[]> {
+  return request(`/feedback`);
+}
+
+export function updateFeedbackStatus(
+  feedbackId: number,
+  data: { status: FeedbackStatus; admin_response?: string }
+): Promise<{ success: boolean }> {
+  return request(`/feedback/${feedbackId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function getPlayerUnreadFeedbackCount(playerId: number): Promise<{ count: number }> {
+  return request(`/feedback/player/${playerId}/unread`);
+}

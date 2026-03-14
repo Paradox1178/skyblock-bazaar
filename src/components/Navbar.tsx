@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Store, Settings, LogIn, LogOut } from 'lucide-react';
+import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, DEFAULT_ITEMS } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
+import { getPlayerUnreadFeedbackCount } from '@/api/client';
 import LoginDialog from '@/components/LoginDialog';
 
 const Navbar = () => {
@@ -13,6 +14,7 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +45,13 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    getPlayerUnreadFeedbackCount(user.id)
+      .then(r => setUnreadCount(r.count))
+      .catch(() => {});
+  }, [user, location.pathname]);
 
   return (
     <>
@@ -127,9 +136,14 @@ const Navbar = () => {
                       <Link
                         to="/settings"
                         onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors"
+                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors relative"
                       >
                         <Settings className="h-4 w-4 text-yellow-500" /> Einstellungen
+                        {unreadCount > 0 && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-600 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
                       </Link>
                       <button
                         onClick={() => { logout(); setShowUserMenu(false); }}
