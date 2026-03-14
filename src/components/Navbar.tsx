@@ -46,6 +46,13 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    getPlayerUnreadFeedbackCount(user.id)
+      .then(r => setUnreadCount(r.count))
+      .catch(() => {});
+  }, [user, location.pathname]);
+
   return (
     <>
       <header className="sticky top-0 z-50">
