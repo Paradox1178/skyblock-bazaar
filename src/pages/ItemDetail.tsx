@@ -1,10 +1,11 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingDown, TrendingUp, BarChart3, MapPin } from 'lucide-react';
+import { ArrowLeft, TrendingDown, TrendingUp, BarChart3, MapPin, MessageSquareWarning } from 'lucide-react';
 import { DEFAULT_ITEMS, RARITY_LABELS, ShopListing } from '@/data/items';
 import { getShopsForItem, recordPriceSnapshot } from '@/api/client';
 import TalerIcon from "@/components/TalerIcon";
 import PriceHistoryChart from '@/components/PriceHistoryChart';
+import FeedbackDialog from '@/components/FeedbackDialog';
 
 const ItemDetail = () => {
   const { itemId } = useParams<{ itemId: string }>();
