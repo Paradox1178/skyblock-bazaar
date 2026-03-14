@@ -192,6 +192,24 @@ const ItemDetail = () => {
             <Link to="/settings" className="mc-category-active px-8 py-3 text-lg">Angebot über Profil eintragen</Link>
           </div>
         )}
+
+        {/* Feedback Button */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="mc-btn flex items-center gap-2 mx-auto text-yellow-500 border-yellow-900/50 hover:text-yellow-400"
+          >
+            <MessageSquareWarning className="h-4 w-4" />
+            Fehler melden / Feedback geben
+          </button>
+        </div>
+
+        <FeedbackDialog
+          open={showFeedback}
+          onClose={() => setShowFeedback(false)}
+          itemId={item.id}
+          itemName={item.name}
+        />
       </div>
     </div>
   );
