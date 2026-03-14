@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Store, Plus, Trash2, Save, Package, Pencil, Check, X, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Store, Plus, Trash2, Save, Package, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth, UserShopItem } from '@/context/AuthContext';
 import { DEFAULT_ITEMS } from '@/data/items';
-import { getPlayerFeedback, ApiFeedback, FeedbackStatus } from '@/api/client';
 import TalerIcon from '@/components/TalerIcon';
 import ItemSearchPicker from '@/components/ItemSearchPicker';
 
