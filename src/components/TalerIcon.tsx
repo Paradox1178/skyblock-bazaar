@@ -1,5 +1,6 @@
 interface TalerIconProps {
-  size?: number
+  size?: number;
+  className?: string;
 }
 
 export default function TalerIcon({ size = 20 }: TalerIconProps) {
