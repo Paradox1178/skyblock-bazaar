@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Store, Plus, Trash2, Save, Package } from 'lucide-react';
+import { ArrowLeft, Store, Plus, Trash2, Save, Package, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth, UserShopItem } from '@/context/AuthContext';
 import { DEFAULT_ITEMS } from '@/data/items';
 import TalerIcon from '@/components/TalerIcon';
+import ItemSearchPicker from '@/components/ItemSearchPicker';
 
 const Settings = () => {
   const { user, updateProfile, logout } = useAuth();
@@ -19,6 +20,8 @@ const Settings = () => {
   const [items, setItems] = useState<UserShopItem[]>(user?.shopItems || []);
   const [newItemId, setNewItemId] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState('');
 
   if (!user) return null;
 
@@ -39,6 +42,24 @@ const Settings = () => {
 
   const removeItem = (itemId: string) => {
     setItems(items.filter(i => i.itemId !== itemId));
+  };
+
+  const startEdit = (shopItem: UserShopItem) => {
+    setEditingItemId(shopItem.itemId);
+    setEditPrice(String(shopItem.price));
+  };
+
+  const saveEdit = () => {
+    if (!editingItemId || !editPrice) return;
+    setItems(items.map(i => i.itemId === editingItemId ? { ...i, price: Number(editPrice) } : i));
+    setEditingItemId(null);
+    setEditPrice('');
+    toast.success('Preis aktualisiert!');
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditPrice('');
   };
 
   const saveProfile = () => {
@@ -85,25 +106,14 @@ const Settings = () => {
           <h2 className="text-xl font-black flex items-center gap-2 mb-6">
             <Store className="h-5 w-5 text-yellow-500" /> Shop Einstellungen
           </h2>
-
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Shop Name *</label>
-              <input
-                className="mc-input bg-[#1a1a1a]"
-                value={shopName}
-                onChange={e => setShopName(e.target.value)}
-                placeholder="z.B. DiamantKönig Shop"
-              />
+              <input className="mc-input bg-[#1a1a1a]" value={shopName} onChange={e => setShopName(e.target.value)} placeholder="z.B. DiamantKönig Shop" />
             </div>
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Besuchbefehl</label>
-              <input
-                className="mc-input bg-[#1a1a1a]"
-                value={shopCoordinates}
-                onChange={e => setShopCoordinates(e.target.value)}
-                placeholder="z.B. /visit DerOmat"
-              />
+              <input className="mc-input bg-[#1a1a1a]" value={shopCoordinates} onChange={e => setShopCoordinates(e.target.value)} placeholder="z.B. /visit DerOmat" />
             </div>
           </div>
         </div>
@@ -114,35 +124,30 @@ const Settings = () => {
             <Package className="h-5 w-5 text-yellow-500" /> Deine Angebote ({items.length})
           </h2>
 
-          {/* Add Item Form */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-black/20 border border-[#333]">
-            <select
-              className="mc-input bg-[#1a1a1a] flex-1"
+          {/* Add Item Form with Search */}
+          <div className="flex flex-col gap-3 mb-6 p-4 bg-black/20 border border-[#333]">
+            <ItemSearchPicker
               value={newItemId}
-              onChange={e => setNewItemId(e.target.value)}
-            >
-              <option value="" disabled>Item wählen...</option>
-              {DEFAULT_ITEMS
-                .filter(item => !items.some(i => i.itemId === item.id))
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(item => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-            </select>
-            <input
-              className="mc-input bg-[#1a1a1a] w-full sm:w-32"
-              type="number"
-              min="0"
-              value={newPrice}
-              onChange={e => setNewPrice(e.target.value)}
-              placeholder="Preis"
+              onChange={setNewItemId}
+              excludeIds={items.map(i => i.itemId)}
+              placeholder="Item suchen und auswählen..."
             />
-            <button onClick={addItem} className="mc-btn-primary flex items-center gap-1 shrink-0">
-              <Plus className="h-4 w-4" /> Hinzufügen
-            </button>
+            <div className="flex gap-3">
+              <input
+                className="mc-input bg-[#1a1a1a] flex-1"
+                type="number"
+                min="0"
+                value={newPrice}
+                onChange={e => setNewPrice(e.target.value)}
+                placeholder="Preis in Taler"
+              />
+              <button onClick={addItem} className="mc-btn-primary flex items-center gap-1 shrink-0">
+                <Plus className="h-4 w-4" /> Hinzufügen
+              </button>
+            </div>
           </div>
 
-          {/* Item List */}
+          {/* Item List with Edit */}
           {items.length > 0 ? (
             <div className="space-y-2">
               {items.map(shopItem => (
@@ -156,17 +161,38 @@ const Settings = () => {
                     </div>
                     <span className="text-sm font-bold text-white">{getItemName(shopItem.itemId)}</span>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-yellow-500 font-bold flex items-center gap-1">
-                      {shopItem.price} <TalerIcon className="w-3 h-3" />
-                    </span>
-                    <button
-                      onClick={() => removeItem(shopItem.itemId)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+
+                  {editingItemId === shopItem.itemId ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        className="mc-input bg-[#1a1a1a] w-24 text-center py-1"
+                        type="number"
+                        min="0"
+                        value={editPrice}
+                        onChange={e => setEditPrice(e.target.value)}
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                      />
+                      <button onClick={saveEdit} className="text-green-400 hover:text-green-300 transition-colors">
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button onClick={cancelEdit} className="text-gray-400 hover:text-white transition-colors">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-yellow-500 font-bold flex items-center gap-1">
+                        {shopItem.price} <TalerIcon className="w-3 h-3" />
+                      </span>
+                      <button onClick={() => startEdit(shopItem)} className="text-blue-400 hover:text-blue-300 transition-colors" title="Preis bearbeiten">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => removeItem(shopItem.itemId)} className="text-red-500 hover:text-red-400 transition-colors" title="Entfernen">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -182,10 +208,7 @@ const Settings = () => {
           <button onClick={saveProfile} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2">
             <Save className="h-4 w-4" /> Profil speichern
           </button>
-          <button
-            onClick={() => { logout(); navigate('/'); }}
-            className="mc-btn py-3 font-black text-red-400 border-red-900/50"
-          >
+          <button onClick={() => { logout(); navigate('/'); }} className="mc-btn py-3 font-black text-red-400 border-red-900/50">
             Abmelden
           </button>
         </div>
