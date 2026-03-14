@@ -57,7 +57,7 @@ const Navbar = () => {
     <>
       <header className="sticky top-0 z-50">
         <div className="mc-navbar">
-          <div className="container mx-auto flex items-center gap-4 px-4 py-3">
+          <div className="container mx-auto flex items-center justify-center gap-4 px-4 py-3">
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <span className="text-2xl">⛏️</span>
               <span className="font-pixel text-[11px] text-primary-foreground tracking-wider hidden sm:inline drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
@@ -65,7 +65,7 @@ const Navbar = () => {
               </span>
             </Link>
 
-            <div className="flex-1 max-w-lg relative" ref={dropdownRef}>
+            <div className="w-full max-w-lg min-w-0 relative" ref={dropdownRef}>
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
