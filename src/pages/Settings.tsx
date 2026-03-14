@@ -22,11 +22,6 @@ const Settings = () => {
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
 
-  if (!user) {
-    navigate('/');
-    return null;
-  }
-
   useEffect(() => {
     if (!user) return;
     setFeedbackLoading(true);
@@ -35,6 +30,11 @@ const Settings = () => {
       .catch(() => {})
       .finally(() => setFeedbackLoading(false));
   }, [user?.id]);
+
+  if (!user) {
+    navigate('/');
+    return null;
+  }
 
   const items = user.shopItems;
 
