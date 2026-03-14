@@ -27,6 +27,15 @@ const Settings = () => {
     return null;
   }
 
+  useEffect(() => {
+    if (!user) return;
+    setFeedbackLoading(true);
+    getPlayerFeedback(user.id)
+      .then(setFeedbacks)
+      .catch(() => {})
+      .finally(() => setFeedbackLoading(false));
+  }, [user?.id]);
+
   const items = user.shopItems;
 
   const handleAddItem = async () => {
