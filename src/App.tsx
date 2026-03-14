@@ -9,6 +9,7 @@ import Items from "./pages/Items";
 import ItemDetail from "./pages/ItemDetail";
 import SubmitShop from "./pages/SubmitShop";
 import Settings from "./pages/Settings";
+import AdminFeedback from "./pages/AdminFeedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
