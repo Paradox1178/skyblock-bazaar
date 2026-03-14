@@ -1,8 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Store, Settings, LogIn, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { CATEGORIES, DEFAULT_ITEMS, getItemShops, getLowestPrice } from '@/data/items';
-import TalerIcon from '@/components/TalerIcon';
+import { CATEGORIES, DEFAULT_ITEMS } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
 import LoginDialog from '@/components/LoginDialog';
 
@@ -77,38 +76,22 @@ const Navbar = () => {
 
               {showDropdown && results.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[0_10px_25px_rgba(0,0,0,0.5)] z-[60]">
-                  {results.map((item) => {
-                    const shops = getItemShops(item.id);
-                    const lowPrice = getLowestPrice(item.id);
-                    return (
-                      <Link
-                        key={item.id}
-                        to={`/items/${item.id}`}
-                        onClick={() => { setSearch(''); setShowDropdown(false); }}
-                        className="flex items-center justify-between p-3 border-b border-black/20 hover:bg-[#323232] transition-colors group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="mc-item-slot bg-[#1a1a1a] w-10 h-10 shrink-0">
-                            <img src={item.icon} alt="" className="pixelated w-6 h-6" />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-bold text-white text-sm group-hover:text-yellow-500">{item.name}</p>
-                            <p className="text-[9px] text-gray-500 uppercase tracking-tighter flex items-center gap-2">
-                              <span className="flex items-center gap-0.5"><Store className="h-2.5 w-2.5" /> {shops.length} Shops</span>
-                            </p>
-                          </div>
-                        </div>
-                        {lowPrice !== null ? (
-                          <div className="text-right">
-                            <p className="mc-price text-sm">{lowPrice} <TalerIcon className="w-3 h-3" /></p>
-                            <p className="text-[8px] text-green-600 font-bold uppercase tracking-tighter">Bester Preis</p>
-                          </div>
-                        ) : (
-                          <p className="text-[9px] text-gray-600 italic">Keine Angebote</p>
-                        )}
-                      </Link>
-                    );
-                  })}
+                  {results.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/items/${item.id}`}
+                      onClick={() => { setSearch(''); setShowDropdown(false); }}
+                      className="flex items-center gap-3 p-3 border-b border-black/20 hover:bg-[#323232] transition-colors group"
+                    >
+                      <div className="mc-item-slot bg-[#1a1a1a] w-10 h-10 shrink-0">
+                        <img src={item.icon} alt="" className="pixelated w-6 h-6" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-white text-sm group-hover:text-yellow-500">{item.name}</p>
+                        <p className="text-[9px] text-gray-500 uppercase">{item.category}</p>
+                      </div>
+                    </Link>
+                  ))}
                   <div
                     className="p-2 bg-black/10 text-center text-[10px] text-gray-400 cursor-pointer hover:text-white"
                     onClick={handleSearch}
@@ -125,7 +108,6 @@ const Navbar = () => {
                 <span className="hidden sm:inline">Shop eintragen</span>
               </Link>
 
-              {/* User Area */}
               {user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button

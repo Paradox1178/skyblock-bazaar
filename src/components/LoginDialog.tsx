@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { X, LogIn } from 'lucide-react';
+import { X, LogIn, Loader2 } from 'lucide-react';
 
 interface LoginDialogProps {
   open: boolean;
@@ -8,17 +8,21 @@ interface LoginDialogProps {
 }
 
 const LoginDialog = ({ open, onClose }: LoginDialogProps) => {
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const [name, setName] = useState('');
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 3) return;
-    login(name.trim());
-    setName('');
-    onClose();
+    try {
+      await login(name.trim());
+      setName('');
+      onClose();
+    } catch {
+      // error toast handled in AuthContext
+    }
   };
 
   return (
@@ -53,6 +57,7 @@ const LoginDialog = ({ open, onClose }: LoginDialogProps) => {
               minLength={3}
               maxLength={16}
               autoFocus
+              disabled={loading}
             />
           </div>
 
@@ -72,10 +77,10 @@ const LoginDialog = ({ open, onClose }: LoginDialogProps) => {
 
           <button
             type="submit"
-            disabled={name.trim().length < 3}
-            className="mc-btn-primary w-full py-3 font-black disabled:opacity-50"
+            disabled={name.trim().length < 3 || loading}
+            className="mc-btn-primary w-full py-3 font-black disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            ⛏️ Einloggen
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Verbinde...</> : '⛏️ Einloggen'}
           </button>
         </form>
       </div>
