@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Store, Plus, Trash2, Save, Package, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,24 +8,25 @@ import TalerIcon from '@/components/TalerIcon';
 import ItemSearchPicker from '@/components/ItemSearchPicker';
 
 const Settings = () => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, addItem, removeItem, updateItemPrice, logout } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) navigate('/');
-  }, [user, navigate]);
 
   const [shopName, setShopName] = useState(user?.shopName || '');
   const [shopCoordinates, setShopCoordinates] = useState(user?.shopCoordinates || '');
-  const [items, setItems] = useState<UserShopItem[]>(user?.shopItems || []);
   const [newItemId, setNewItemId] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  if (!user) return null;
+  if (!user) {
+    navigate('/');
+    return null;
+  }
 
-  const addItem = () => {
+  const items = user.shopItems;
+
+  const handleAddItem = async () => {
     if (!newItemId || !newPrice) {
       toast.error('Bitte Item und Preis angeben!');
       return;
@@ -34,14 +35,15 @@ const Settings = () => {
       toast.error('Dieses Item ist bereits in deinem Shop!');
       return;
     }
-    setItems([...items, { itemId: newItemId, price: Number(newPrice) }]);
+    await addItem(newItemId, Number(newPrice));
     setNewItemId('');
     setNewPrice('');
     toast.success('Item hinzugefügt!');
   };
 
-  const removeItem = (itemId: string) => {
-    setItems(items.filter(i => i.itemId !== itemId));
+  const handleRemoveItem = async (itemId: string) => {
+    await removeItem(itemId);
+    toast.success('Item entfernt!');
   };
 
   const startEdit = (shopItem: UserShopItem) => {
@@ -49,9 +51,9 @@ const Settings = () => {
     setEditPrice(String(shopItem.price));
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingItemId || !editPrice) return;
-    setItems(items.map(i => i.itemId === editingItemId ? { ...i, price: Number(editPrice) } : i));
+    await updateItemPrice(editingItemId, Number(editPrice));
     setEditingItemId(null);
     setEditPrice('');
     toast.success('Preis aktualisiert!');
@@ -62,17 +64,18 @@ const Settings = () => {
     setEditPrice('');
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!shopName.trim()) {
       toast.error('Bitte gib deinem Shop einen Namen!');
       return;
     }
-    updateProfile({
+    setSaving(true);
+    await updateProfile({
       shopName: shopName.trim(),
       shopCoordinates: shopCoordinates.trim() || undefined,
-      shopItems: items,
     });
-    toast.success('Profil gespeichert! Deine Angebote sind jetzt sichtbar. ⛏️');
+    setSaving(false);
+    toast.success('Profil gespeichert! ⛏️');
   };
 
   const getItemName = (id: string) => DEFAULT_ITEMS.find(i => i.id === id)?.name || id;
@@ -124,7 +127,6 @@ const Settings = () => {
             <Package className="h-5 w-5 text-yellow-500" /> Deine Angebote ({items.length})
           </h2>
 
-          {/* Add Item Form with Search */}
           <div className="flex flex-col gap-3 mb-6 p-4 bg-black/20 border border-[#333]">
             <ItemSearchPicker
               value={newItemId}
@@ -141,13 +143,12 @@ const Settings = () => {
                 onChange={e => setNewPrice(e.target.value)}
                 placeholder="Preis in Taler"
               />
-              <button onClick={addItem} className="mc-btn-primary flex items-center gap-1 shrink-0">
+              <button onClick={handleAddItem} className="mc-btn-primary flex items-center gap-1 shrink-0">
                 <Plus className="h-4 w-4" /> Hinzufügen
               </button>
             </div>
           </div>
 
-          {/* Item List with Edit */}
           {items.length > 0 ? (
             <div className="space-y-2">
               {items.map(shopItem => (
@@ -188,7 +189,7 @@ const Settings = () => {
                       <button onClick={() => startEdit(shopItem)} className="text-blue-400 hover:text-blue-300 transition-colors" title="Preis bearbeiten">
                         <Pencil className="h-4 w-4" />
                       </button>
-                      <button onClick={() => removeItem(shopItem.itemId)} className="text-red-500 hover:text-red-400 transition-colors" title="Entfernen">
+                      <button onClick={() => handleRemoveItem(shopItem.itemId)} className="text-red-500 hover:text-red-400 transition-colors" title="Entfernen">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -205,8 +206,8 @@ const Settings = () => {
 
         {/* Save / Logout */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <button onClick={saveProfile} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2">
-            <Save className="h-4 w-4" /> Profil speichern
+          <button onClick={saveProfile} disabled={saving} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2 disabled:opacity-50">
+            <Save className="h-4 w-4" /> {saving ? 'Speichern...' : 'Profil speichern'}
           </button>
           <button onClick={() => { logout(); navigate('/'); }} className="mc-btn py-3 font-black text-red-400 border-red-900/50">
             Abmelden

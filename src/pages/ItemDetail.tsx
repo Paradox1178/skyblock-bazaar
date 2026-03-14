@@ -1,27 +1,47 @@
 import { useParams, Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingDown, TrendingUp, BarChart3, MapPin } from 'lucide-react';
-import { DEFAULT_ITEMS, RARITY_LABELS, getItemShops } from '@/data/items';
-import { recordPriceSnapshot } from '@/data/priceHistory';
+import { DEFAULT_ITEMS, RARITY_LABELS, ShopListing } from '@/data/items';
+import { getShopsForItem, recordPriceSnapshot } from '@/api/client';
 import TalerIcon from "@/components/TalerIcon";
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 
 const ItemDetail = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const item = DEFAULT_ITEMS.find(i => i.id === itemId);
+  const [shops, setShops] = useState<ShopListing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const shops = item ? getItemShops(item.id) : [];
-  const prices = shops.map(s => s.price);
-  const lowPrice = prices.length > 0 ? Math.min(...prices) : null;
-  const highPrice = prices.length > 0 ? Math.max(...prices) : null;
-  const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : null;
-
-  // Record price snapshot for history
   useEffect(() => {
-    if (item && prices.length > 0) {
-      recordPriceSnapshot(item.id, prices);
-    }
-  }, [item?.id, prices.length]);
+    if (!item) return;
+    setLoading(true);
+    getShopsForItem(item.id)
+      .then(apiShops => {
+        const mapped: ShopListing[] = apiShops.map(s => ({
+          id: s.id,
+          shopName: s.shop_name,
+          ownerName: s.owner_name,
+          itemId: s.item_id,
+          price: s.price,
+          coordinates: s.coordinates || undefined,
+          createdAt: s.created_at?.split('T')[0] || '',
+        }));
+        setShops(mapped);
+
+        // Record price snapshot
+        if (mapped.length > 0) {
+          const prices = mapped.map(s => s.price);
+          recordPriceSnapshot(item.id, {
+            avg_price: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+            low_price: Math.min(...prices),
+            high_price: Math.max(...prices),
+            shop_count: prices.length,
+          }).catch(() => {});
+        }
+      })
+      .catch(() => setShops([]))
+      .finally(() => setLoading(false));
+  }, [item?.id]);
 
   if (!item) {
     return (
@@ -34,6 +54,10 @@ const ItemDetail = () => {
     );
   }
 
+  const prices = shops.map(s => s.price);
+  const lowPrice = prices.length > 0 ? Math.min(...prices) : null;
+  const highPrice = prices.length > 0 ? Math.max(...prices) : null;
+  const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : null;
   const rarity = RARITY_LABELS[item.rarity];
 
   return (
@@ -96,7 +120,11 @@ const ItemDetail = () => {
           </h2>
         </div>
 
-        {shops.length > 0 ? (
+        {loading ? (
+          <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] p-16 text-center">
+            <p className="text-gray-400 font-bold animate-pulse">Lade Shops...</p>
+          </div>
+        ) : shops.length > 0 ? (
           <div className="space-y-4">
             {shops.sort((a, b) => a.price - b.price).map((shop, i) => (
               <div key={shop.id} className="bg-[#2a2a2a] border-2 border-[#1e1e1e] p-5 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-gray-500 transition-colors shadow-lg">
@@ -139,7 +167,7 @@ const ItemDetail = () => {
             <p className="text-xl text-gray-400 font-bold mb-8 italic">
               "In den Tiefen des Bazaars wurde dieses Item noch nicht gesichtet..."
             </p>
-            <Link to="/submit" className="mc-category-active px-8 py-3 text-lg">Shop als Erster eintragen</Link>
+            <Link to="/settings" className="mc-category-active px-8 py-3 text-lg">Angebot über Profil eintragen</Link>
           </div>
         )}
       </div>
