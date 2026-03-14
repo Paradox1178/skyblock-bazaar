@@ -1,7 +1,7 @@
 import rawItems from './minecraft_items.json';
 
 export interface ShopListing {
-  id: string;
+  id: string | number;
   shopName: string;
   ownerName: string;
   itemId: string;
@@ -34,80 +34,3 @@ export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
 };
 
 export const DEFAULT_ITEMS: Item[] = rawItems as Item[];
-
-export const DEFAULT_SHOPS: ShopListing[] = [
-  { id: '1', shopName: 'DiamantKönig Shop', ownerName: 'DerOmat', itemId: 'diamond', price: 500, coordinates: '/visit DerOmat', createdAt: '2026-03-01' },
-  { id: '2', shopName: 'Billig Erze', ownerName: 'Dev_Dave', itemId: 'diamond', price: 450, coordinates: '/visit Dev_Dave', createdAt: '2026-03-05' },
-];
-
-const SHOPS_KEY = 'cytooxien_shops';
-const AUTH_KEY = 'cytomarkt_user';
-
-/** Get all shops including user profile shops */
-export function getShops(): ShopListing[] {
-  const stored = localStorage.getItem(SHOPS_KEY);
-  const manualShops: ShopListing[] = stored ? JSON.parse(stored) : DEFAULT_SHOPS;
-
-  // Also include shops from logged-in user profiles
-  const profileShops = getProfileShops();
-  
-  return [...manualShops, ...profileShops];
-}
-
-/** Convert user profile shop items into ShopListings */
-function getProfileShops(): ShopListing[] {
-  const userStr = localStorage.getItem(AUTH_KEY);
-  if (!userStr) return [];
-
-  try {
-    const user = JSON.parse(userStr);
-    if (!user.shopName || !user.shopItems?.length) return [];
-
-    return user.shopItems.map((item: { itemId: string; price: number }) => ({
-      id: `profile_${user.username}_${item.itemId}`,
-      shopName: user.shopName,
-      ownerName: user.username,
-      itemId: item.itemId,
-      price: item.price,
-      coordinates: user.shopCoordinates,
-      createdAt: user.joinedAt || new Date().toISOString().split('T')[0],
-    }));
-  } catch {
-    return [];
-  }
-}
-
-export function addShop(shop: Omit<ShopListing, 'id' | 'createdAt'>): ShopListing {
-  const stored = localStorage.getItem(SHOPS_KEY);
-  const shops: ShopListing[] = stored ? JSON.parse(stored) : DEFAULT_SHOPS;
-  const newShop: ShopListing = {
-    ...shop,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString().split('T')[0],
-  };
-  shops.push(newShop);
-  localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
-  return newShop;
-}
-
-export function getItemShops(itemId: string): ShopListing[] {
-  return getShops().filter(s => s.itemId === itemId);
-}
-
-export function getAveragePrice(itemId: string): number | null {
-  const shops = getItemShops(itemId);
-  if (shops.length === 0) return null;
-  return Math.round(shops.reduce((sum, s) => sum + s.price, 0) / shops.length);
-}
-
-export function getLowestPrice(itemId: string): number | null {
-  const shops = getItemShops(itemId);
-  if (shops.length === 0) return null;
-  return Math.min(...shops.map(s => s.price));
-}
-
-export function getHighestPrice(itemId: string): number | null {
-  const shops = getItemShops(itemId);
-  if (shops.length === 0) return null;
-  return Math.max(...shops.map(s => s.price));
-}
