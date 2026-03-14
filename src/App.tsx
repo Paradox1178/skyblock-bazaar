@@ -28,6 +28,7 @@ const App = () => (
             <Route path="/items/:itemId" element={<ItemDetail />} />
             <Route path="/submit" element={<SubmitShop />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/feedback" element={<MyFeedback />} />
             <Route path="/admin/feedback" element={<AdminFeedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

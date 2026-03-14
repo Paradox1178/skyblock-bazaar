@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Send, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, Reply } from 'lucide-react';
 import { getAllFeedback, updateFeedbackStatus, ApiFeedback, FeedbackStatus } from '@/api/client';
 import { DEFAULT_ITEMS } from '@/data/items';
 import { toast } from 'sonner';
 
-const STATUS_OPTIONS: { value: FeedbackStatus; label: string; color: string }[] = [
-  { value: 'eingereicht', label: 'Eingereicht', color: 'text-gray-400 bg-gray-800' },
-  { value: 'gesehen', label: 'Gesehen', color: 'text-blue-400 bg-blue-900/40' },
-  { value: 'beantwortet', label: 'Beantwortet', color: 'text-purple-400 bg-purple-900/40' },
-  { value: 'geaendert', label: 'Geändert', color: 'text-green-400 bg-green-900/40' },
-  { value: 'kein_fehler', label: 'Kein Fehler', color: 'text-orange-400 bg-orange-900/40' },
-];
+const STATUS_LABELS: Record<FeedbackStatus, { label: string; color: string }> = {
+  eingereicht: { label: 'Eingereicht', color: 'text-gray-400 bg-gray-800' },
+  gesehen: { label: 'Gesehen', color: 'text-blue-400 bg-blue-900/40' },
+  beantwortet: { label: 'Beantwortet', color: 'text-purple-400 bg-purple-900/40' },
+  geaendert: { label: 'Geändert', color: 'text-green-400 bg-green-900/40' },
+  kein_fehler: { label: 'Kein Fehler', color: 'text-orange-400 bg-orange-900/40' },
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   falscher_preis: 'Falscher Marktwert',
@@ -21,13 +21,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   sonstiges: 'Sonstiges',
 };
 
+const CLOSE_OPTIONS: { value: FeedbackStatus; label: string }[] = [
+  { value: 'geaendert', label: 'Korrigiert' },
+  { value: 'kein_fehler', label: 'Kein Fehler' },
+];
+
 const AdminFeedback = () => {
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [replyingId, setReplyingId] = useState<number | null>(null);
   const [responseText, setResponseText] = useState('');
-  const [newStatus, setNewStatus] = useState<FeedbackStatus>('gesehen');
   const [sending, setSending] = useState(false);
+  const [closingId, setClosingId] = useState<number | null>(null);
   const [filter, setFilter] = useState<FeedbackStatus | 'alle'>('alle');
 
   const load = () => {
@@ -40,19 +45,37 @@ const AdminFeedback = () => {
 
   useEffect(() => { load(); }, []);
 
-  const handleRespond = async (fb: ApiFeedback) => {
+  const handleClose = async (fb: ApiFeedback, status: FeedbackStatus) => {
+    setSending(true);
+    try {
+      await updateFeedbackStatus(fb.id, { status });
+      toast.success(`Feedback als "${STATUS_LABELS[status].label}" geschlossen.`);
+      setClosingId(null);
+      load();
+    } catch {
+      toast.error('Fehler beim Schließen.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleReply = async (fb: ApiFeedback) => {
+    if (!responseText.trim()) {
+      toast.error('Bitte eine Antwort eingeben.');
+      return;
+    }
     setSending(true);
     try {
       await updateFeedbackStatus(fb.id, {
-        status: newStatus,
-        admin_response: responseText.trim() || undefined,
+        status: 'beantwortet',
+        admin_response: responseText.trim(),
       });
-      toast.success('Status aktualisiert!');
-      setSelectedId(null);
+      toast.success('Antwort gesendet!');
+      setReplyingId(null);
       setResponseText('');
       load();
     } catch {
-      toast.error('Fehler beim Aktualisieren.');
+      toast.error('Fehler beim Senden.');
     } finally {
       setSending(false);
     }
@@ -64,8 +87,7 @@ const AdminFeedback = () => {
   };
 
   const getStatusBadge = (status: FeedbackStatus) => {
-    const s = STATUS_OPTIONS.find(o => o.value === status);
-    if (!s) return null;
+    const s = STATUS_LABELS[status];
     return <span className={`text-[10px] font-black uppercase px-2 py-0.5 ${s.color}`}>{s.label}</span>;
   };
 
@@ -95,13 +117,13 @@ const AdminFeedback = () => {
           >
             Alle ({feedbacks.length})
           </button>
-          {STATUS_OPTIONS.map(s => {
-            const count = feedbacks.filter(f => f.status === s.value).length;
+          {Object.entries(STATUS_LABELS).map(([value, s]) => {
+            const count = feedbacks.filter(f => f.status === value).length;
             return (
               <button
-                key={s.value}
-                onClick={() => setFilter(s.value)}
-                className={`mc-category ${filter === s.value ? 'mc-category-active' : ''}`}
+                key={value}
+                onClick={() => setFilter(value as FeedbackStatus)}
+                className={`mc-category ${filter === value ? 'mc-category-active' : ''}`}
               >
                 {s.label} ({count})
               </button>
@@ -155,40 +177,25 @@ const AdminFeedback = () => {
                     </div>
                   )}
 
-                  {/* Respond Section */}
-                  {selectedId === fb.id ? (
+                  {/* Reply form */}
+                  {replyingId === fb.id && (
                     <div className="mt-4 p-4 bg-black/20 border border-[#333] space-y-3">
-                      <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                          Neuer Status
-                        </label>
-                        <select
-                          value={newStatus}
-                          onChange={e => setNewStatus(e.target.value as FeedbackStatus)}
-                          className="mc-input bg-[#1a1a1a] w-full"
-                        >
-                          {STATUS_OPTIONS.map(s => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                          Antwort (optional)
-                        </label>
-                        <textarea
-                          value={responseText}
-                          onChange={e => setResponseText(e.target.value)}
-                          placeholder="Antwort an den Spieler..."
-                          rows={3}
-                          maxLength={500}
-                          className="mc-input bg-[#1a1a1a] w-full resize-none"
-                        />
-                      </div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                        Rückantwort an Spieler
+                      </label>
+                      <textarea
+                        value={responseText}
+                        onChange={e => setResponseText(e.target.value)}
+                        placeholder="Antwort an den Spieler..."
+                        rows={3}
+                        maxLength={500}
+                        className="mc-input bg-[#1a1a1a] w-full resize-none"
+                        autoFocus
+                      />
                       <div className="flex gap-3">
-                        <button onClick={() => setSelectedId(null)} className="mc-btn flex-1">Abbrechen</button>
+                        <button onClick={() => { setReplyingId(null); setResponseText(''); }} className="mc-btn flex-1">Abbrechen</button>
                         <button
-                          onClick={() => handleRespond(fb)}
+                          onClick={() => handleReply(fb)}
                           disabled={sending}
                           className="mc-btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
@@ -196,17 +203,44 @@ const AdminFeedback = () => {
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setSelectedId(fb.id);
-                        setNewStatus(fb.status === 'eingereicht' ? 'gesehen' : fb.status);
-                        setResponseText(fb.admin_response || '');
-                      }}
-                      className="mt-3 mc-btn-primary text-xs flex items-center gap-1"
-                    >
-                      <MessageSquare className="h-3 w-3" /> Bearbeiten / Antworten
-                    </button>
+                  )}
+
+                  {/* Close sub-options */}
+                  {closingId === fb.id && (
+                    <div className="mt-4 p-4 bg-black/20 border border-[#333]">
+                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Schließen als:</p>
+                      <div className="flex gap-3">
+                        {CLOSE_OPTIONS.map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => handleClose(fb, opt.value)}
+                            disabled={sending}
+                            className="mc-btn flex-1 text-sm disabled:opacity-50"
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                        <button onClick={() => setClosingId(null)} className="mc-btn text-sm">Abbrechen</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  {replyingId !== fb.id && closingId !== fb.id && (
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={() => { setReplyingId(fb.id); setClosingId(null); setResponseText(fb.admin_response || ''); }}
+                        className="mc-btn-primary text-xs flex items-center gap-1"
+                      >
+                        <Reply className="h-3 w-3" /> Rückantwort
+                      </button>
+                      <button
+                        onClick={() => { setClosingId(fb.id); setReplyingId(null); }}
+                        className="mc-btn text-xs flex items-center gap-1 text-red-400 border-red-900/50"
+                      >
+                        <XCircle className="h-3 w-3" /> Schließen
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
