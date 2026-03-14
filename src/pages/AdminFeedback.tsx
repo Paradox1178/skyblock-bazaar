@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, Reply } from 'lucide-react';
-import { getAllFeedback, updateFeedbackStatus, ApiFeedback, FeedbackStatus } from '@/api/client';
+import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, Reply, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAllFeedback, updateFeedbackStatus, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
 import { DEFAULT_ITEMS } from '@/data/items';
 import { toast } from 'sonner';
 
@@ -29,11 +29,12 @@ const CLOSE_OPTIONS: { value: FeedbackStatus; label: string }[] = [
 const AdminFeedback = () => {
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [replyingId, setReplyingId] = useState<number | null>(null);
-  const [responseText, setResponseText] = useState('');
   const [sending, setSending] = useState(false);
   const [closingId, setClosingId] = useState<number | null>(null);
   const [filter, setFilter] = useState<FeedbackStatus | 'alle'>('alle');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Record<number, ApiFeedbackMessage[]>>({});
+  const [replyText, setReplyText] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -44,6 +45,24 @@ const AdminFeedback = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  const loadMessages = async (feedbackId: number) => {
+    try {
+      const msgs = await getFeedbackMessages(feedbackId);
+      setMessages(prev => ({ ...prev, [feedbackId]: msgs }));
+    } catch {}
+  };
+
+  const toggleExpand = (fbId: number) => {
+    if (expandedId === fbId) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(fbId);
+      if (!messages[fbId]) loadMessages(fbId);
+    }
+    setReplyText('');
+    setClosingId(null);
+  };
 
   const handleClose = async (fb: ApiFeedback, status: FeedbackStatus) => {
     setSending(true);
@@ -59,20 +78,14 @@ const AdminFeedback = () => {
     }
   };
 
-  const handleReply = async (fb: ApiFeedback) => {
-    if (!responseText.trim()) {
-      toast.error('Bitte eine Antwort eingeben.');
-      return;
-    }
+  const handleReply = async (fbId: number) => {
+    if (!replyText.trim()) return;
     setSending(true);
     try {
-      await updateFeedbackStatus(fb.id, {
-        status: 'beantwortet',
-        admin_response: responseText.trim(),
-      });
+      await sendFeedbackReply(fbId, 'admin', replyText.trim());
       toast.success('Antwort gesendet!');
-      setReplyingId(null);
-      setResponseText('');
+      setReplyText('');
+      await loadMessages(fbId);
       load();
     } catch {
       toast.error('Fehler beim Senden.');
@@ -92,6 +105,7 @@ const AdminFeedback = () => {
   };
 
   const filtered = filter === 'alle' ? feedbacks : feedbacks.filter(f => f.status === filter);
+  const isClosed = (status: FeedbackStatus) => ['geaendert', 'kein_fehler'].includes(status);
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-white pb-20">
@@ -111,20 +125,13 @@ const AdminFeedback = () => {
 
         {/* Filter */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setFilter('alle')}
-            className={`mc-category ${filter === 'alle' ? 'mc-category-active' : ''}`}
-          >
+          <button onClick={() => setFilter('alle')} className={`mc-category ${filter === 'alle' ? 'mc-category-active' : ''}`}>
             Alle ({feedbacks.length})
           </button>
           {Object.entries(STATUS_LABELS).map(([value, s]) => {
             const count = feedbacks.filter(f => f.status === value).length;
             return (
-              <button
-                key={value}
-                onClick={() => setFilter(value as FeedbackStatus)}
-                className={`mc-category ${filter === value ? 'mc-category-active' : ''}`}
-              >
+              <button key={value} onClick={() => setFilter(value as FeedbackStatus)} className={`mc-category ${filter === value ? 'mc-category-active' : ''}`}>
                 {s.label} ({count})
               </button>
             );
@@ -141,110 +148,122 @@ const AdminFeedback = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => (
-              <div key={fb.id} className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-lg">
-                <div className="p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <img src={`https://mc-heads.net/avatar/${fb.player_name}/24`} alt="" className="w-6 h-6 pixelated" />
-                      <span className="font-bold text-white">{fb.player_name}</span>
-                      {getStatusBadge(fb.status)}
-                    </div>
-                    <span className="text-[10px] text-gray-500 font-bold">
-                      {new Date(fb.created_at).toLocaleString('de-DE')}
-                    </span>
-                  </div>
+            {filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
+              const isExpanded = expandedId === fb.id;
+              const msgs = messages[fb.id] || [];
 
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-yellow-900/40 text-yellow-500">
-                      {CATEGORY_LABELS[fb.category] || fb.category}
-                    </span>
-                    {fb.item_id && (
-                      <Link to={`/items/${fb.item_id}`} className="text-[10px] font-black uppercase px-2 py-0.5 bg-blue-900/40 text-blue-400 hover:text-blue-300">
-                        📦 {getItemName(fb.item_id)}
-                      </Link>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-300 leading-relaxed bg-black/20 p-3 border border-[#333]">
-                    {fb.message}
-                  </p>
-
-                  {fb.admin_response && (
-                    <div className="mt-3 p-3 bg-green-900/10 border border-green-900/30">
-                      <p className="text-[10px] font-black text-green-500 uppercase mb-1">Admin-Antwort:</p>
-                      <p className="text-sm text-green-300">{fb.admin_response}</p>
-                    </div>
-                  )}
-
-                  {/* Reply form */}
-                  {replyingId === fb.id && (
-                    <div className="mt-4 p-4 bg-black/20 border border-[#333] space-y-3">
-                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                        Rückantwort an Spieler
-                      </label>
-                      <textarea
-                        value={responseText}
-                        onChange={e => setResponseText(e.target.value)}
-                        placeholder="Antwort an den Spieler..."
-                        rows={3}
-                        maxLength={500}
-                        className="mc-input bg-[#1a1a1a] w-full resize-none"
-                        autoFocus
-                      />
-                      <div className="flex gap-3">
-                        <button onClick={() => { setReplyingId(null); setResponseText(''); }} className="mc-btn flex-1">Abbrechen</button>
-                        <button
-                          onClick={() => handleReply(fb)}
-                          disabled={sending}
-                          className="mc-btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          <Send className="h-4 w-4" /> {sending ? 'Sende...' : 'Absenden'}
-                        </button>
+              return (
+                <div key={fb.id} className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-lg">
+                  {/* Header */}
+                  <button
+                    onClick={() => toggleExpand(fb.id)}
+                    className="w-full p-5 text-left hover:bg-[#333] transition-colors"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-3">
+                        <img src={`https://mc-heads.net/avatar/${fb.player_name}/24`} alt="" className="w-6 h-6 pixelated" />
+                        <span className="font-bold text-white">{fb.player_name}</span>
+                        {getStatusBadge(fb.status)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500 font-bold">{new Date(fb.created_at).toLocaleString('de-DE')}</span>
+                        {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
                       </div>
                     </div>
-                  )}
-
-                  {/* Close sub-options */}
-                  {closingId === fb.id && (
-                    <div className="mt-4 p-4 bg-black/20 border border-[#333]">
-                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Schließen als:</p>
-                      <div className="flex gap-3">
-                        {CLOSE_OPTIONS.map(opt => (
-                          <button
-                            key={opt.value}
-                            onClick={() => handleClose(fb, opt.value)}
-                            disabled={sending}
-                            className="mc-btn flex-1 text-sm disabled:opacity-50"
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                        <button onClick={() => setClosingId(null)} className="mc-btn text-sm">Abbrechen</button>
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-yellow-900/40 text-yellow-500">
+                        {CATEGORY_LABELS[fb.category] || fb.category}
+                      </span>
+                      {fb.item_id && (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-blue-900/40 text-blue-400">
+                          📦 {getItemName(fb.item_id)}
+                        </span>
+                      )}
                     </div>
-                  )}
+                  </button>
 
-                  {/* Action buttons */}
-                  {replyingId !== fb.id && closingId !== fb.id && (
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={() => { setReplyingId(fb.id); setClosingId(null); setResponseText(fb.admin_response || ''); }}
-                        className="mc-btn-primary text-xs flex items-center gap-1"
-                      >
-                        <Reply className="h-3 w-3" /> Rückantwort
-                      </button>
-                      <button
-                        onClick={() => { setClosingId(fb.id); setReplyingId(null); }}
-                        className="mc-btn text-xs flex items-center gap-1 text-red-400 border-red-900/50"
-                      >
-                        <XCircle className="h-3 w-3" /> Schließen
-                      </button>
+                  {/* Expanded chat */}
+                  {isExpanded && (
+                    <div className="border-t border-[#333]">
+                      <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
+                        {msgs.length === 0 ? (
+                          <p className="text-gray-500 text-xs italic text-center py-4">Lade Nachrichten...</p>
+                        ) : (
+                          msgs.map(msg => {
+                            const isAdmin = msg.sender_type === 'admin';
+                            return (
+                              <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] px-3 py-2 text-sm ${
+                                  isAdmin
+                                    ? 'bg-green-900/20 border border-green-900/40 text-green-200'
+                                    : 'bg-[#333] border border-[#444] text-gray-200'
+                                }`}>
+                                  <p className="text-[9px] font-black uppercase mb-1 opacity-60">
+                                    {isAdmin ? 'Admin' : fb.player_name} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                  <p className="whitespace-pre-wrap">{msg.message}</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Close sub-options */}
+                      {closingId === fb.id && (
+                        <div className="p-4 border-t border-[#333] bg-black/20">
+                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Schließen als:</p>
+                          <div className="flex gap-3">
+                            {CLOSE_OPTIONS.map(opt => (
+                              <button key={opt.value} onClick={() => handleClose(fb, opt.value)} disabled={sending} className="mc-btn flex-1 text-sm disabled:opacity-50">
+                                {opt.label}
+                              </button>
+                            ))}
+                            <button onClick={() => setClosingId(null)} className="mc-btn text-sm">Abbrechen</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reply + actions */}
+                      {!isClosed(fb.status) && closingId !== fb.id && (
+                        <div className="p-3 border-t border-[#333]">
+                          <div className="flex gap-2">
+                            <textarea
+                              value={replyText}
+                              onChange={e => setReplyText(e.target.value)}
+                              placeholder="Admin-Antwort schreiben..."
+                              className="mc-input bg-[#1a1a1a] flex-1 resize-none text-sm"
+                              rows={1}
+                            />
+                            <button
+                              onClick={() => handleReply(fb.id)}
+                              disabled={sending || !replyText.trim()}
+                              className="px-3 bg-green-700 hover:bg-green-600 text-white font-black disabled:opacity-50 transition-colors"
+                            >
+                              <Send className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => setClosingId(fb.id)}
+                              className="mc-btn text-xs flex items-center gap-1 text-red-400 border-red-900/50"
+                            >
+                              <XCircle className="h-3 w-3" /> Schließen
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {isClosed(fb.status) && (
+                        <div className="p-3 border-t border-[#333] text-center">
+                          <p className="text-xs text-gray-500 italic">Geschlossen als „{STATUS_LABELS[fb.status].label}"</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

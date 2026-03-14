@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getPlayerFeedback, ApiFeedback, FeedbackStatus, replyToFeedback } from '@/api/client';
+import { getPlayerFeedback, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
 import { DEFAULT_ITEMS } from '@/data/items';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -21,7 +21,8 @@ const MyFeedback = () => {
   const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Record<number, ApiFeedbackMessage[]>>({});
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -38,6 +39,23 @@ const MyFeedback = () => {
     loadFeedbacks();
   }, [user?.id]);
 
+  const loadMessages = async (feedbackId: number) => {
+    try {
+      const msgs = await getFeedbackMessages(feedbackId);
+      setMessages(prev => ({ ...prev, [feedbackId]: msgs }));
+    } catch {}
+  };
+
+  const toggleExpand = (fbId: number) => {
+    if (expandedId === fbId) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(fbId);
+      if (!messages[fbId]) loadMessages(fbId);
+    }
+    setReplyText('');
+  };
+
   if (!user) {
     navigate('/');
     return null;
@@ -47,15 +65,12 @@ const MyFeedback = () => {
     if (!replyText.trim() || sending) return;
     setSending(true);
     try {
-      await replyToFeedback(feedbackId, user.id, replyText.trim());
+      await sendFeedbackReply(feedbackId, 'player', replyText.trim(), user.id);
       setReplyText('');
-      setReplyingTo(null);
+      await loadMessages(feedbackId);
       loadFeedbacks();
-    } catch {
-      // ignore
-    } finally {
-      setSending(false);
-    }
+    } catch {}
+    setSending(false);
   };
 
   return (
@@ -80,60 +95,79 @@ const MyFeedback = () => {
             {feedbacks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
               const s = STATUS_MAP[fb.status];
               const itemName = fb.item_id ? (DEFAULT_ITEMS.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
-              const isNew = (fb.status === 'beantwortet' || fb.status === 'geaendert' || fb.status === 'kein_fehler') && fb.admin_response;
+              const isExpanded = expandedId === fb.id;
               const isClosed = CLOSED_STATUSES.includes(fb.status);
-              const canReply = fb.admin_response && !isClosed;
+              const msgs = messages[fb.id] || [];
 
               return (
-                <div key={fb.id} className={`bg-[#2a2a2a] border-2 ${isNew ? 'border-yellow-600' : 'border-[#1e1e1e]'} p-4`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                <div key={fb.id} className={`bg-[#2a2a2a] border-2 ${fb.status === 'beantwortet' ? 'border-yellow-600' : 'border-[#1e1e1e]'}`}>
+                  {/* Header */}
+                  <button
+                    onClick={() => toggleExpand(fb.id)}
+                    className="w-full p-4 text-left flex items-center justify-between hover:bg-[#333] transition-colors"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 ${s.color}`}>{s.label}</span>
                       {itemName && <span className="text-[10px] text-gray-500">📦 {itemName}</span>}
+                      <span className="text-xs text-gray-400 truncate max-w-[200px]">{fb.message?.split('\n')[0]}</span>
                     </div>
-                    <span className="text-[10px] text-gray-500">{new Date(fb.created_at).toLocaleDateString('de-DE')}</span>
-                  </div>
-                  <p className="text-sm text-gray-300 mb-2">{fb.message}</p>
-                  {fb.admin_response && (
-                    <div className="p-2 bg-green-900/10 border border-green-900/30 mt-2">
-                      <p className="text-[10px] font-black text-green-500 uppercase mb-1">Antwort:</p>
-                      <p className="text-sm text-green-300">{fb.admin_response}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-500">{new Date(fb.created_at).toLocaleDateString('de-DE')}</span>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
                     </div>
-                  )}
+                  </button>
 
-                  {canReply && (
-                    <div className="mt-3">
-                      {replyingTo === fb.id ? (
-                        <div className="space-y-2">
+                  {/* Chat view */}
+                  {isExpanded && (
+                    <div className="border-t border-[#333]">
+                      <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
+                        {msgs.length === 0 ? (
+                          <p className="text-gray-500 text-xs italic text-center py-4">Lade Nachrichten...</p>
+                        ) : (
+                          msgs.map(msg => {
+                            const isPlayer = msg.sender_type === 'player';
+                            return (
+                              <div key={msg.id} className={`flex ${isPlayer ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] px-3 py-2 text-sm ${
+                                  isPlayer
+                                    ? 'bg-yellow-900/30 border border-yellow-800/50 text-yellow-100'
+                                    : 'bg-green-900/20 border border-green-900/40 text-green-200'
+                                }`}>
+                                  <p className="text-[9px] font-black uppercase mb-1 opacity-60">
+                                    {isPlayer ? 'Du' : 'Admin'} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                  <p className="whitespace-pre-wrap">{msg.message}</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Reply input */}
+                      {!isClosed && (
+                        <div className="p-3 border-t border-[#333] flex gap-2">
                           <Textarea
                             value={replyText}
                             onChange={e => setReplyText(e.target.value)}
-                            placeholder="Deine Antwort..."
-                            className="bg-[#1e1e1e] border-[#333] text-white text-sm min-h-[60px]"
+                            placeholder="Antwort schreiben..."
+                            className="bg-[#1e1e1e] border-[#444] text-white text-sm min-h-[40px] flex-1 resize-none"
+                            rows={1}
                           />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleReply(fb.id)}
-                              disabled={sending || !replyText.trim()}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-black text-xs font-black uppercase disabled:opacity-50 transition-colors"
-                            >
-                              <Send className="h-3 w-3" /> Senden
-                            </button>
-                            <button
-                              onClick={() => { setReplyingTo(null); setReplyText(''); }}
-                              className="px-3 py-1.5 bg-[#333] hover:bg-[#444] text-gray-300 text-xs font-bold uppercase transition-colors"
-                            >
-                              Abbrechen
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => handleReply(fb.id)}
+                            disabled={sending || !replyText.trim()}
+                            className="px-3 bg-yellow-600 hover:bg-yellow-500 text-black font-black disabled:opacity-50 transition-colors self-end"
+                          >
+                            <Send className="h-4 w-4" />
+                          </button>
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => setReplyingTo(fb.id)}
-                          className="flex items-center gap-1 text-xs font-bold text-yellow-500 hover:text-yellow-400 transition-colors mt-1"
-                        >
-                          <MessageSquare className="h-3 w-3" /> Antworten
-                        </button>
+                      )}
+
+                      {isClosed && (
+                        <div className="p-3 border-t border-[#333] text-center">
+                          <p className="text-xs text-gray-500 italic">Diese Meldung wurde geschlossen.</p>
+                        </div>
                       )}
                     </div>
                   )}
