@@ -3,14 +3,14 @@ interface TalerIconProps {
   className?: string;
 }
 
-export default function TalerIcon({ size = 20 }: TalerIconProps) {
+export default function TalerIcon({ size = 20, className }: TalerIconProps) {
   return (
     <img
       src="/images/taler.png"
       alt="Taler"
       width={size}
       height={size}
-      className="inline-block ml-1"
+      className={`inline-block ml-1 ${className || ''}`}
     />
   )
 }
