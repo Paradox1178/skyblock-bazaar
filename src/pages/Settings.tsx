@@ -19,6 +19,8 @@ const Settings = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   if (!user) {
     navigate('/');
