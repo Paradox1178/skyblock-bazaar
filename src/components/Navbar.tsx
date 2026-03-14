@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Store, Settings, LogIn, LogOut } from 'lucide-react';
+import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, DEFAULT_ITEMS } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
+import { getPlayerUnreadFeedbackCount } from '@/api/client';
 import LoginDialog from '@/components/LoginDialog';
 
 const Navbar = () => {
