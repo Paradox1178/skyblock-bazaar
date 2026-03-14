@@ -159,3 +159,14 @@ export function updateFeedbackStatus(
 export function getPlayerUnreadFeedbackCount(playerId: number): Promise<{ count: number }> {
   return request(`/feedback/player/${playerId}/unread`);
 }
+
+export function replyToFeedback(
+  feedbackId: number,
+  playerId: number,
+  message: string
+): Promise<{ success: boolean }> {
+  return request(`/feedback/${feedbackId}/reply`, {
+    method: 'POST',
+    body: JSON.stringify({ player_id: playerId, message }),
+  });
+}
