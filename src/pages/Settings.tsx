@@ -18,17 +18,6 @@ const Settings = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
   const [saving, setSaving] = useState(false);
-  const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    setFeedbackLoading(true);
-    getPlayerFeedback(user.id)
-      .then(setFeedbacks)
-      .catch(() => {})
-      .finally(() => setFeedbackLoading(false));
-  }, [user?.id]);
 
   if (!user) {
     navigate('/');
