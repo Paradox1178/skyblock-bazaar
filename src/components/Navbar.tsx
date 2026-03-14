@@ -169,7 +169,7 @@ const Navbar = () => {
 
         <div className="mc-panel border-t-0 bg-[#222222]/95 backdrop-blur-sm" style={{ borderTop: 'none' }}>
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
+            <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide md:justify-center">
               <Link
                 to="/items"
                 className={`mc-category ${location.pathname === '/items' && !location.search ? 'mc-category-active' : ''}`}
