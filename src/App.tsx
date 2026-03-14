@@ -10,6 +10,7 @@ import ItemDetail from "./pages/ItemDetail";
 import SubmitShop from "./pages/SubmitShop";
 import Settings from "./pages/Settings";
 import AdminFeedback from "./pages/AdminFeedback";
+import MyFeedback from "./pages/MyFeedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
