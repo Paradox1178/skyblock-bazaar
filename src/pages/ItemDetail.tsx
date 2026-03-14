@@ -12,6 +12,7 @@ const ItemDetail = () => {
   const item = DEFAULT_ITEMS.find(i => i.id === itemId);
   const [shops, setShops] = useState<ShopListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
     if (!item) return;
