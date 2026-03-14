@@ -41,17 +41,45 @@ export const DEFAULT_SHOPS: ShopListing[] = [
 ];
 
 const SHOPS_KEY = 'cytooxien_shops';
+const AUTH_KEY = 'cytomarkt_user';
 
+/** Get all shops including user profile shops */
 export function getShops(): ShopListing[] {
-  if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(SHOPS_KEY);
-  if (stored) return JSON.parse(stored);
-  localStorage.setItem(SHOPS_KEY, JSON.stringify(DEFAULT_SHOPS));
-  return DEFAULT_SHOPS;
+  const manualShops: ShopListing[] = stored ? JSON.parse(stored) : DEFAULT_SHOPS;
+
+  // Also include shops from logged-in user profiles
+  const profileShops = getProfileShops();
+  
+  return [...manualShops, ...profileShops];
+}
+
+/** Convert user profile shop items into ShopListings */
+function getProfileShops(): ShopListing[] {
+  const userStr = localStorage.getItem(AUTH_KEY);
+  if (!userStr) return [];
+
+  try {
+    const user = JSON.parse(userStr);
+    if (!user.shopName || !user.shopItems?.length) return [];
+
+    return user.shopItems.map((item: { itemId: string; price: number }) => ({
+      id: `profile_${user.username}_${item.itemId}`,
+      shopName: user.shopName,
+      ownerName: user.username,
+      itemId: item.itemId,
+      price: item.price,
+      coordinates: user.shopCoordinates,
+      createdAt: user.joinedAt || new Date().toISOString().split('T')[0],
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export function addShop(shop: Omit<ShopListing, 'id' | 'createdAt'>): ShopListing {
-  const shops = getShops();
+  const stored = localStorage.getItem(SHOPS_KEY);
+  const shops: ShopListing[] = stored ? JSON.parse(stored) : DEFAULT_SHOPS;
   const newShop: ShopListing = {
     ...shop,
     id: crypto.randomUUID(),
