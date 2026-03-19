@@ -5,7 +5,7 @@
     "category": "Blöcke",
     "icon": "/items/stone.png",
     "rarity": "common",
-    "marketPrice": 0
+    "marketPrice": 15
   },
   {
     "id": "granite",
@@ -2397,7 +2397,7 @@
     "category": "Sonstiges",
     "icon": "/items/pumpkin.png",
     "rarity": "common",
-    "marketPrice": 0
+    "marketPrice": 10
   },
   {
     "id": "carved_pumpkin",
@@ -7069,7 +7069,7 @@
     "category": "Sonstiges",
     "icon": "/items/book.png",
     "rarity": "common",
-    "marketPrice": 0
+    "marketPrice": 60
   },
   {
     "id": "slime_ball",
@@ -7637,7 +7637,7 @@
     "category": "Sonstiges",
     "icon": "/items/nether_wart.png",
     "rarity": "common",
-    "marketPrice": 0
+    "marketPrice": 100
   },
   {
     "id": "potion",
@@ -9309,7 +9309,7 @@
     "category": "Sonstiges",
     "icon": "/items/sweet_berries.png",
     "rarity": "common",
-    "marketPrice": 0
+    "marketPrice": 20
   },
   {
     "id": "glow_berries",

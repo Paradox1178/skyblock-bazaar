@@ -1,5 +1,12 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { loginPlayer, updatePlayer, addPlayerItem, removePlayerItem, ApiPlayer } from '@/api/client';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import {
+  getCurrentAuth,
+  logoutPlayer,
+  updatePlayer,
+  addPlayerItem,
+  removePlayerItem,
+  ApiPlayer,
+} from '@/api/client';
 import { toast } from 'sonner';
 
 export interface UserShopItem {
@@ -19,8 +26,8 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (username: string) => Promise<void>;
-  logout: () => void;
+  refreshAuth: () => Promise<void>;
+  logout: () => Promise<void>;
   updateProfile: (updates: { shopName?: string; shopCoordinates?: string }) => Promise<void>;
   addItem: (itemId: string, price: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -29,8 +36,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const AUTH_KEY = 'cytomarkt_user';
-
 function apiPlayerToProfile(p: ApiPlayer): UserProfile {
   return {
     id: p.id,
@@ -38,52 +43,64 @@ function apiPlayerToProfile(p: ApiPlayer): UserProfile {
     shopName: p.shop_name || undefined,
     shopCoordinates: p.shop_coordinates || undefined,
     shopItems: p.shopItems.map(i => ({ itemId: i.item_id, price: i.price })),
-    joinedAt: p.joined_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    joinedAt:
+      p.created_at?.split('T')[0] ||
+      p.joined_at?.split('T')[0] ||
+      new Date().toISOString().split('T')[0],
   };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const stored = localStorage.getItem(AUTH_KEY);
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-    }
-  }, [user]);
-
-  const login = async (username: string) => {
-    setLoading(true);
+  const refreshAuth = useCallback(async () => {
     try {
-      const player = await loginPlayer(username);
-      setUser(apiPlayerToProfile(player));
-    } catch (err) {
-      toast.error('Login fehlgeschlagen. Ist die API erreichbar?');
-      throw err;
+      const result = await getCurrentAuth();
+      if (result.authenticated && result.player) {
+        setUser(apiPlayerToProfile(result.player));
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => setUser(null);
+  useEffect(() => {
+    refreshAuth();
+  }, [refreshAuth]);
+
+  const logout = async () => {
+    try {
+      await logoutPlayer();
+    } catch {
+      // egal, wir leeren lokal trotzdem
+    } finally {
+      setUser(null);
+    }
+  };
 
   const updateProfileFn = async (updates: { shopName?: string; shopCoordinates?: string }) => {
     if (!user) return;
+
     try {
       await updatePlayer(user.id, {
         shop_name: updates.shopName,
         shop_coordinates: updates.shopCoordinates,
       });
-      setUser(prev => prev ? {
-        ...prev,
-        shopName: updates.shopName,
-        shopCoordinates: updates.shopCoordinates,
-      } : null);
+
+      setUser(prev =>
+        prev
+          ? {
+              ...prev,
+              shopName: updates.shopName,
+              shopCoordinates: updates.shopCoordinates,
+            }
+          : null
+      );
     } catch {
       toast.error('Profil konnte nicht gespeichert werden.');
     }
@@ -91,12 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addItemFn = async (itemId: string, price: number) => {
     if (!user) return;
+
     try {
       await addPlayerItem(user.id, itemId, price);
-      setUser(prev => prev ? {
-        ...prev,
-        shopItems: [...prev.shopItems.filter(i => i.itemId !== itemId), { itemId, price }],
-      } : null);
+      setUser(prev =>
+        prev
+          ? {
+              ...prev,
+              shopItems: [...prev.shopItems.filter(i => i.itemId !== itemId), { itemId, price }],
+            }
+          : null
+      );
     } catch {
       toast.error('Item konnte nicht hinzugefügt werden.');
     }
@@ -104,12 +126,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const removeItemFn = async (itemId: string) => {
     if (!user) return;
+
     try {
       await removePlayerItem(user.id, itemId);
-      setUser(prev => prev ? {
-        ...prev,
-        shopItems: prev.shopItems.filter(i => i.itemId !== itemId),
-      } : null);
+      setUser(prev =>
+        prev
+          ? {
+              ...prev,
+              shopItems: prev.shopItems.filter(i => i.itemId !== itemId),
+            }
+          : null
+      );
     } catch {
       toast.error('Item konnte nicht entfernt werden.');
     }
@@ -117,28 +144,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateItemPriceFn = async (itemId: string, price: number) => {
     if (!user) return;
+
     try {
       await addPlayerItem(user.id, itemId, price);
-      setUser(prev => prev ? {
-        ...prev,
-        shopItems: prev.shopItems.map(i => i.itemId === itemId ? { ...i, price } : i),
-      } : null);
+      setUser(prev =>
+        prev
+          ? {
+              ...prev,
+              shopItems: prev.shopItems.map(i => (i.itemId === itemId ? { ...i, price } : i)),
+            }
+          : null
+      );
     } catch {
       toast.error('Preis konnte nicht aktualisiert werden.');
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      login,
-      logout,
-      updateProfile: updateProfileFn,
-      addItem: addItemFn,
-      removeItem: removeItemFn,
-      updateItemPrice: updateItemPriceFn,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        refreshAuth,
+        logout,
+        updateProfile: updateProfileFn,
+        addItem: addItemFn,
+        removeItem: removeItemFn,
+        updateItemPrice: updateItemPriceFn,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

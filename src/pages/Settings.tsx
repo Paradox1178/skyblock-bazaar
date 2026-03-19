@@ -209,7 +209,13 @@ const Settings = () => {
           <button onClick={saveProfile} disabled={saving} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2 disabled:opacity-50">
             <Save className="h-4 w-4" /> {saving ? 'Speichern...' : 'Profil speichern'}
           </button>
-          <button onClick={() => { logout(); navigate('/'); }} className="mc-btn py-3 font-black text-red-400 border-red-900/50">
+          <button
+            onClick={async () => {
+              await logout();
+              navigate('/');
+            }}
+            className="mc-btn py-3 font-black text-red-400 border-red-900/50"
+          >
             Abmelden
           </button>
         </div>

@@ -1,37 +1,59 @@
 const API_BASE = 'https://api.dev-dave.de/api';
+// Für Produktion später z. B.:
+// const API_BASE = 'https://api.dev-dave.de/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
   });
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(error.error || `Request failed: ${res.status}`);
   }
-  return res.json();
+
+  // Manche Endpoints könnten später leer antworten
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+
+  return {} as T;
 }
 
-// === PLAYER ===
+// === AUTH ===
 
 export interface ApiPlayer {
   id: number;
   username: string;
   shop_name: string | null;
   shop_coordinates: string | null;
-  joined_at: string;
+  created_at?: string;
+  joined_at?: string;
   shopItems: { item_id: string; price: number }[];
 }
 
-export function loginPlayer(username: string): Promise<ApiPlayer> {
-  return request('/players/login', {
+export interface ApiAuthMeResponse {
+  authenticated: boolean;
+  player?: ApiPlayer;
+}
+
+export function getCurrentAuth(): Promise<ApiAuthMeResponse> {
+  return request('/auth/me');
+}
+
+export function logoutPlayer(): Promise<{ success: boolean }> {
+  return request('/auth/logout', {
     method: 'POST',
-    body: JSON.stringify({ username }),
   });
 }
+
+// === PLAYER ===
 
 export function updatePlayer(
   id: number,
@@ -113,7 +135,12 @@ export function recordPriceSnapshot(
 
 // === FEEDBACK ===
 
-export type FeedbackStatus = 'eingereicht' | 'gesehen' | 'beantwortet' | 'geaendert' | 'kein_fehler';
+export type FeedbackStatus =
+  | 'eingereicht'
+  | 'gesehen'
+  | 'beantwortet'
+  | 'geaendert'
+  | 'kein_fehler';
 
 export interface ApiFeedback {
   id: number;

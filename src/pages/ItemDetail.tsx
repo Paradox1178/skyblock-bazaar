@@ -197,7 +197,7 @@ const ItemDetail = () => {
         <div className="mt-8 text-center">
           <button
             onClick={() => setShowFeedback(true)}
-            className="mc-btn-primary flex items-center gap-2 mx-auto px-5 py-2.5"
+            className="mc-btn-danger flex items-center gap-2 mx-auto px-5 py-2.5"
           >
             <MessageSquareWarning className="h-4 w-4" />
             Fehler melden / Feedback geben

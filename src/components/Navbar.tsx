@@ -9,7 +9,7 @@ import LoginDialog from '@/components/LoginDialog';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -18,10 +18,10 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const results = search.trim().length > 1 
+  const results = search.trim().length > 1
     ? DEFAULT_ITEMS
-        .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
-        .slice(0, 5)
+      .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+      .slice(0, 5)
     : [];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -50,7 +50,7 @@ const Navbar = () => {
     if (!user) { setUnreadCount(0); return; }
     getPlayerUnreadFeedbackCount(user.id)
       .then(r => setUnreadCount(r.count))
-      .catch(() => {});
+      .catch(() => { });
   }, [user, location.pathname]);
 
   return (
@@ -117,7 +117,11 @@ const Navbar = () => {
                 <span className="hidden sm:inline">Shop eintragen</span>
               </Link>
 
-              {user ? (
+              {loading ? (
+                <div className="mc-btn opacity-70">
+                  <span className="hidden sm:inline">Lade...</span>
+                </div>
+              ) : user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -153,7 +157,10 @@ const Navbar = () => {
                         )}
                       </Link>
                       <button
-                        onClick={() => { logout(); setShowUserMenu(false); }}
+                        onClick={async () => {
+                          await logout();
+                          setShowUserMenu(false);
+                        }}
                         className="flex items-center gap-2 p-3 hover:bg-[#323232] text-red-400 text-sm font-bold w-full text-left transition-colors border-t border-black/20"
                       >
                         <LogOut className="h-4 w-4" /> Abmelden
