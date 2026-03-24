@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getPlayerFeedback, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
-import { DEFAULT_ITEMS } from '@/data/items';
+import { useItems } from '@/hooks/useItems';
 import { Textarea } from '@/components/ui/textarea';
 
 const STATUS_MAP: Record<FeedbackStatus, { label: string; color: string }> = {
@@ -19,6 +19,7 @@ const CLOSED_STATUSES: FeedbackStatus[] = ['geaendert', 'kein_fehler'];
 const MyFeedback = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { data: allItems = [] } = useItems();
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -29,15 +30,10 @@ const MyFeedback = () => {
   const loadFeedbacks = () => {
     if (!user) return;
     setLoading(true);
-    getPlayerFeedback(user.id)
-      .then(setFeedbacks)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    getPlayerFeedback(user.id).then(setFeedbacks).catch(() => {}).finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    loadFeedbacks();
-  }, [user?.id]);
+  useEffect(() => { loadFeedbacks(); }, [user?.id]);
 
   const loadMessages = async (feedbackId: number) => {
     try {
@@ -47,19 +43,12 @@ const MyFeedback = () => {
   };
 
   const toggleExpand = (fbId: number) => {
-    if (expandedId === fbId) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(fbId);
-      if (!messages[fbId]) loadMessages(fbId);
-    }
+    if (expandedId === fbId) { setExpandedId(null); }
+    else { setExpandedId(fbId); if (!messages[fbId]) loadMessages(fbId); }
     setReplyText('');
   };
 
-  if (!user) {
-    navigate('/');
-    return null;
-  }
+  if (!user) { navigate('/'); return null; }
 
   const handleReply = async (feedbackId: number) => {
     if (!replyText.trim() || sending) return;
@@ -94,18 +83,14 @@ const MyFeedback = () => {
           <div className="space-y-3">
             {feedbacks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
               const s = STATUS_MAP[fb.status];
-              const itemName = fb.item_id ? (DEFAULT_ITEMS.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
+              const itemName = fb.item_id ? (allItems.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
               const isExpanded = expandedId === fb.id;
               const isClosed = CLOSED_STATUSES.includes(fb.status);
               const msgs = messages[fb.id] || [];
 
               return (
                 <div key={fb.id} className={`bg-[#2a2a2a] border-2 ${fb.status === 'beantwortet' ? 'border-yellow-600' : 'border-[#1e1e1e]'}`}>
-                  {/* Header */}
-                  <button
-                    onClick={() => toggleExpand(fb.id)}
-                    className="w-full p-4 text-left flex items-center justify-between hover:bg-[#333] transition-colors"
-                  >
+                  <button onClick={() => toggleExpand(fb.id)} className="w-full p-4 text-left flex items-center justify-between hover:bg-[#333] transition-colors">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 ${s.color}`}>{s.label}</span>
                       {itemName && <span className="text-[10px] text-gray-500">📦 {itemName}</span>}
@@ -117,48 +102,30 @@ const MyFeedback = () => {
                     </div>
                   </button>
 
-                  {/* Chat view */}
                   {isExpanded && (
                     <div className="border-t border-[#333]">
                       <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
                         {msgs.length === 0 ? (
                           <p className="text-gray-500 text-xs italic text-center py-4">Lade Nachrichten...</p>
-                        ) : (
-                          msgs.map(msg => {
-                            const isPlayer = msg.sender_type === 'player';
-                            return (
-                              <div key={msg.id} className={`flex ${isPlayer ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] px-3 py-2 text-sm ${
-                                  isPlayer
-                                    ? 'bg-yellow-900/30 border border-yellow-800/50 text-yellow-100'
-                                    : 'bg-green-900/20 border border-green-900/40 text-green-200'
-                                }`}>
-                                  <p className="text-[9px] font-black uppercase mb-1 opacity-60">
-                                    {isPlayer ? 'Du' : 'Admin'} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                  <p className="whitespace-pre-wrap">{msg.message}</p>
-                                </div>
+                        ) : msgs.map(msg => {
+                          const isPlayer = msg.sender_type === 'player';
+                          return (
+                            <div key={msg.id} className={`flex ${isPlayer ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] px-3 py-2 text-sm ${isPlayer ? 'bg-yellow-900/30 border border-yellow-800/50 text-yellow-100' : 'bg-green-900/20 border border-green-900/40 text-green-200'}`}>
+                                <p className="text-[9px] font-black uppercase mb-1 opacity-60">
+                                  {isPlayer ? 'Du' : 'Admin'} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                                <p className="whitespace-pre-wrap">{msg.message}</p>
                               </div>
-                            );
-                          })
-                        )}
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      {/* Reply input */}
                       {!isClosed && (
                         <div className="p-3 border-t border-[#333] flex gap-2">
-                          <Textarea
-                            value={replyText}
-                            onChange={e => setReplyText(e.target.value)}
-                            placeholder="Antwort schreiben..."
-                            className="bg-[#1e1e1e] border-[#444] text-white text-sm min-h-[40px] flex-1 resize-none"
-                            rows={1}
-                          />
-                          <button
-                            onClick={() => handleReply(fb.id)}
-                            disabled={sending || !replyText.trim()}
-                            className="px-3 bg-yellow-600 hover:bg-yellow-500 text-black font-black disabled:opacity-50 transition-colors self-end"
-                          >
+                          <Textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Antwort schreiben..." className="bg-[#1e1e1e] border-[#444] text-white text-sm min-h-[40px] flex-1 resize-none" rows={1} />
+                          <button onClick={() => handleReply(fb.id)} disabled={sending || !replyText.trim()} className="px-3 bg-yellow-600 hover:bg-yellow-500 text-black font-black disabled:opacity-50 transition-colors self-end">
                             <Send className="h-4 w-4" />
                           </button>
                         </div>
