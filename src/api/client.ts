@@ -15,6 +15,46 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// === ITEMS (from DB) ===
+
+export interface ApiItem {
+  id: number;
+  item_key: string;
+  minecraft_material: string | null;
+  display_name: string;
+  normalized_name: string;
+  custom_model_data: number | null;
+  category: string | null;
+  icon: string | null;
+  rarity: string | null;
+  market_price: number;
+  is_custom: number;
+  image_base64: string | null;
+  icon_generated: string | null;
+}
+
+export function getAllItems(): Promise<ApiItem[]> {
+  return request('/items');
+}
+
+export function getItem(itemKey: string): Promise<ApiItem> {
+  return request(`/items/${itemKey}`);
+}
+
+export function updateItem(
+  id: number,
+  data: { display_name?: string; category?: string; rarity?: string; market_price?: number; icon?: string }
+): Promise<{ success: boolean }> {
+  return request(`/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteItem(id: number): Promise<{ success: boolean }> {
+  return request(`/items/${id}`, { method: 'DELETE' });
+}
+
 // === PLAYER ===
 
 export interface ApiPlayer {
@@ -23,6 +63,7 @@ export interface ApiPlayer {
   shop_name: string | null;
   shop_coordinates: string | null;
   joined_at: string;
+  is_admin: number;
   shopItems: { item_id: string; price: number }[];
 }
 

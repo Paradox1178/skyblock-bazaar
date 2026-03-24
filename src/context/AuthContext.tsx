@@ -14,6 +14,7 @@ export interface UserProfile {
   shopCoordinates?: string;
   shopItems: UserShopItem[];
   joinedAt: string;
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
@@ -39,6 +40,7 @@ function apiPlayerToProfile(p: ApiPlayer): UserProfile {
     shopCoordinates: p.shop_coordinates || undefined,
     shopItems: p.shopItems.map(i => ({ itemId: i.item_id, price: i.price })),
     joinedAt: p.joined_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    isAdmin: p.is_admin === 1,
   };
 }
 

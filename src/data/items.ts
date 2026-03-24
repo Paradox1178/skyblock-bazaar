@@ -1,5 +1,3 @@
-import rawItems from './minecraft_items.json';
-
 export interface ShopListing {
   id: string | number;
   shopName: string;
@@ -12,12 +10,14 @@ export interface ShopListing {
 }
 
 export interface Item {
-  id: string;
-  name: string;
+  id: string;       // item_key
+  dbId: number;      // database id
+  name: string;      // display_name
   category: string;
   icon: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   marketPrice?: number;
+  isCustom?: boolean;
 }
 
 export const CATEGORIES = [
@@ -32,5 +32,3 @@ export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
   epic: { text: 'Epic', cls: 'bg-[#2a1a3a] text-purple-400 border border-purple-900/50' },
   legendary: { text: 'Legendary', cls: 'bg-[#3a3a1a] text-yellow-400 border border-yellow-900/50' },
 };
-
-export const DEFAULT_ITEMS: Item[] = rawItems as Item[];
