@@ -3,61 +3,76 @@ const API_BASE = 'https://api.dev-dave.de/api';
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
   });
-
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(error.error || `Request failed: ${res.status}`);
   }
-
-  const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return res.json();
-  }
-
-  return {} as T;
+  return res.json();
 }
 
-// === AUTH ===
+// === ITEMS (from DB) ===
+
+export interface ApiItem {
+  id: number;
+  item_key: string;
+  minecraft_material: string | null;
+  display_name: string;
+  normalized_name: string;
+  custom_model_data: number | null;
+  category: string | null;
+  icon: string | null;
+  rarity: string | null;
+  market_price: number;
+  is_custom: number;
+  image_base64: string | null;
+  icon_generated: string | null;
+}
+
+export function getAllItems(): Promise<ApiItem[]> {
+  return request('/items');
+}
+
+export function getItem(itemKey: string): Promise<ApiItem> {
+  return request(`/items/${itemKey}`);
+}
+
+export function updateItem(
+  id: number,
+  data: { display_name?: string; category?: string; rarity?: string; market_price?: number; icon?: string }
+): Promise<{ success: boolean }> {
+  return request(`/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteItem(id: number): Promise<{ success: boolean }> {
+  return request(`/items/${id}`, { method: 'DELETE' });
+}
+
+// === PLAYER ===
 
 export interface ApiPlayer {
   id: number;
   username: string;
   shop_name: string | null;
   shop_coordinates: string | null;
-  created_at?: string;
-  joined_at?: string;
+  joined_at: string;
+  is_admin: number;
   shopItems: { item_id: string; price: number }[];
 }
 
-export interface ApiAuthMeResponse {
-  authenticated: boolean;
-  player?: ApiPlayer;
-}
-
-export function getCurrentAuth(): Promise<ApiAuthMeResponse> {
-  return request('/auth/me');
-}
-
-export function exchangeDevLoginToken(loginToken: string): Promise<ApiAuthMeResponse> {
-  return request('/auth/dev-exchange', {
+export function loginPlayer(username: string): Promise<ApiPlayer> {
+  return request('/players/login', {
     method: 'POST',
-    body: JSON.stringify({ loginToken }),
+    body: JSON.stringify({ username }),
   });
 }
-
-export function logoutPlayer(): Promise<{ success: boolean }> {
-  return request('/auth/logout', {
-    method: 'POST',
-  });
-}
-
-// === PLAYER ===
 
 export function updatePlayer(
   id: number,
@@ -139,12 +154,7 @@ export function recordPriceSnapshot(
 
 // === FEEDBACK ===
 
-export type FeedbackStatus =
-  | 'eingereicht'
-  | 'gesehen'
-  | 'beantwortet'
-  | 'geaendert'
-  | 'kein_fehler';
+export type FeedbackStatus = 'eingereicht' | 'gesehen' | 'beantwortet' | 'geaendert' | 'kein_fehler';
 
 export interface ApiFeedback {
   id: number;
@@ -215,7 +225,7 @@ export function sendFeedbackReply(
   });
 }
 
-// === REQUESTS ===
+// === REQUESTS (Ersuchen) ===
 
 export interface ApiRequest {
   id: number;
@@ -241,35 +251,6 @@ export function createRequest(
   });
 }
 
-export interface ApiItem {
-  id: string;
-  name: string;
-  category: string;
-  icon: string;
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-  marketPrice?: number;
-}
-
-export function getAllItems(): Promise<ApiItem[]> {
-  return request('/items');
-}
-
-export function getItembyId(itemId: string): Promise<ApiItem> {
-  return request(`/items/${itemId}`);
-}
-
-export function updateRequest(
-  requestId: number,
-  data: { title?: string; description?: string }
-): Promise<{ success: boolean }> {
-  return request(`/requests/${requestId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
 export function deleteRequest(requestId: number): Promise<{ success: boolean }> {
-  return request(`/requests/${requestId}`, {
-    method: 'DELETE',
-  });
+  return request(`/requests/${requestId}`, { method: 'DELETE' });
 }

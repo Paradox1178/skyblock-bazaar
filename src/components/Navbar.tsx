@@ -1,28 +1,27 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare, ScrollText } from 'lucide-react';
+import { Search, Plus, Settings, LogIn, LogOut, MessageSquare, ScrollText, Shield } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { CATEGORIES, fetchItems, Item } from '@/data/items';
+import { CATEGORIES } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
 import { getPlayerUnreadFeedbackCount } from '@/api/client';
+import { useItems } from '@/hooks/useItems';
 import LoginDialog from '@/components/LoginDialog';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, loading } = useAuth();
+  const { user, logout } = useAuth();
+  const { data: allItems = [] } = useItems();
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [items, setItems] = useState<Item[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const results = search.trim().length > 1
-    ? items
-      .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 5)
+    ? allItems.filter(item => item.name.toLowerCase().includes(search.toLowerCase())).slice(0, 5)
     : [];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -36,30 +35,16 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setShowDropdown(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setShowUserMenu(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
-    fetchItems()
-    .then(setItems)
-    .catch(err => {
-      console.error('Fehler beim Laden der Items:', err);
-    });
-  }, []);
-
-  useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
-    getPlayerUnreadFeedbackCount(user.id)
-      .then(r => setUnreadCount(r.count))
-      .catch(() => { });
+    getPlayerUnreadFeedbackCount(user.id).then(r => setUnreadCount(r.count)).catch(() => {});
   }, [user, location.pathname]);
 
   return (
@@ -79,10 +64,7 @@ const Navbar = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setShowDropdown(true);
-                  }}
+                  onChange={(e) => { setSearch(e.target.value); setShowDropdown(true); }}
                   onFocus={() => setShowDropdown(true)}
                   placeholder="Item suchen..."
                   className="mc-input pr-10"
@@ -110,10 +92,7 @@ const Navbar = () => {
                       </div>
                     </Link>
                   ))}
-                  <div
-                    className="p-2 bg-black/10 text-center text-[10px] text-gray-400 cursor-pointer hover:text-white"
-                    onClick={handleSearch}
-                  >
+                  <div className="p-2 bg-black/10 text-center text-[10px] text-gray-400 cursor-pointer hover:text-white" onClick={handleSearch}>
                     Alle Ergebnisse für "{search}" anzeigen...
                   </div>
                 </div>
@@ -130,38 +109,19 @@ const Navbar = () => {
                 <span className="hidden sm:inline">Shop eintragen</span>
               </Link>
 
-              {loading ? (
-                <div className="mc-btn opacity-70">
-                  <span className="hidden sm:inline">Lade...</span>
-                </div>
-              ) : user ? (
+              {user ? (
                 <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 mc-btn py-1.5 px-2"
-                  >
-                    <img
-                      src={`https://mc-heads.net/avatar/${user.username}/24`}
-                      alt={user.username}
-                      className="w-6 h-6 pixelated"
-                    />
+                  <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 mc-btn py-1.5 px-2">
+                    <img src={`https://mc-heads.net/avatar/${user.username}/24`} alt={user.username} className="w-6 h-6 pixelated" />
                     <span className="hidden sm:inline text-sm font-bold">{user.username}</span>
                   </button>
 
                   {showUserMenu && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[0_10px_25px_rgba(0,0,0,0.5)] z-[60]">
-                      <Link
-                        to="/settings"
-                        onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors"
-                      >
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors">
                         <Settings className="h-4 w-4 text-yellow-500" /> Einstellungen
                       </Link>
-                      <Link
-                        to="/feedback"
-                        onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors relative border-t border-black/20"
-                      >
+                      <Link to="/feedback" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 p-3 hover:bg-[#323232] text-white text-sm font-bold transition-colors relative border-t border-black/20">
                         <MessageSquare className="h-4 w-4 text-yellow-500" /> Meine Meldungen
                         {unreadCount > 0 && (
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-600 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full">
@@ -169,23 +129,19 @@ const Navbar = () => {
                           </span>
                         )}
                       </Link>
-                      <button
-                        onClick={async () => {
-                          await logout();
-                          setShowUserMenu(false);
-                        }}
-                        className="flex items-center gap-2 p-3 hover:bg-[#323232] text-red-400 text-sm font-bold w-full text-left transition-colors border-t border-black/20"
-                      >
+                      {user.isAdmin && (
+                        <Link to="/admin" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 p-3 hover:bg-[#323232] text-red-400 text-sm font-bold transition-colors border-t border-black/20">
+                          <Shield className="h-4 w-4" /> Admin Panel
+                        </Link>
+                      )}
+                      <button onClick={() => { logout(); setShowUserMenu(false); }} className="flex items-center gap-2 p-3 hover:bg-[#323232] text-red-400 text-sm font-bold w-full text-left transition-colors border-t border-black/20">
                         <LogOut className="h-4 w-4" /> Abmelden
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={() => setShowLogin(true)}
-                  className="mc-btn flex items-center gap-1.5"
-                >
+                <button onClick={() => setShowLogin(true)} className="mc-btn flex items-center gap-1.5">
                   <LogIn className="h-4 w-4" />
                   <span className="hidden sm:inline">Anmelden</span>
                 </button>
@@ -197,18 +153,11 @@ const Navbar = () => {
         <div className="mc-panel border-t-0 bg-[#222222]/95 backdrop-blur-sm" style={{ borderTop: 'none' }}>
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide md:justify-center">
-              <Link
-                to="/items"
-                className={`mc-category ${location.pathname === '/items' && !location.search ? 'mc-category-active' : ''}`}
-              >
+              <Link to="/items" className={`mc-category ${location.pathname === '/items' && !location.search ? 'mc-category-active' : ''}`}>
                 Alle
               </Link>
               {CATEGORIES.map(cat => (
-                <Link
-                  key={cat}
-                  to={`/items?category=${encodeURIComponent(cat)}`}
-                  className={`mc-category ${location.search.includes(encodeURIComponent(cat)) ? 'mc-category-active' : ''}`}
-                >
+                <Link key={cat} to={`/items?category=${encodeURIComponent(cat)}`} className={`mc-category ${location.search.includes(encodeURIComponent(cat)) ? 'mc-category-active' : ''}`}>
                   {cat}
                 </Link>
               ))}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllFeedback, updateFeedbackStatus, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
-import { fetchItems, Item } from '@/data/items';
+import { useItems } from '@/hooks/useItems';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<FeedbackStatus, { label: string; color: string }> = {
@@ -27,6 +27,7 @@ const CLOSE_OPTIONS: { value: FeedbackStatus; label: string }[] = [
 ];
 
 const AdminFeedback = () => {
+  const { data: allItems = [] } = useItems();
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -35,7 +36,6 @@ const AdminFeedback = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Record<number, ApiFeedbackMessage[]>>({});
   const [replyText, setReplyText] = useState('');
-  const [items, setItems] = useState<Item[]>([]);
 
   const load = () => {
     setLoading(true);
@@ -45,12 +45,7 @@ const AdminFeedback = () => {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    load();
-    fetchItems()
-      .then(setItems)
-      .catch(err => console.error('Fehler beim Laden der Items:', err));
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const loadMessages = async (feedbackId: number) => {
     try {
@@ -60,12 +55,8 @@ const AdminFeedback = () => {
   };
 
   const toggleExpand = (fbId: number) => {
-    if (expandedId === fbId) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(fbId);
-      if (!messages[fbId]) loadMessages(fbId);
-    }
+    if (expandedId === fbId) { setExpandedId(null); }
+    else { setExpandedId(fbId); if (!messages[fbId]) loadMessages(fbId); }
     setReplyText('');
     setClosingId(null);
   };
@@ -77,11 +68,8 @@ const AdminFeedback = () => {
       toast.success(`Feedback als "${STATUS_LABELS[status].label}" geschlossen.`);
       setClosingId(null);
       load();
-    } catch {
-      toast.error('Fehler beim Schließen.');
-    } finally {
-      setSending(false);
-    }
+    } catch { toast.error('Fehler beim Schließen.'); }
+    finally { setSending(false); }
   };
 
   const handleReply = async (fbId: number) => {
@@ -93,16 +81,13 @@ const AdminFeedback = () => {
       setReplyText('');
       await loadMessages(fbId);
       load();
-    } catch {
-      toast.error('Fehler beim Senden.');
-    } finally {
-      setSending(false);
-    }
+    } catch { toast.error('Fehler beim Senden.'); }
+    finally { setSending(false); }
   };
 
   const getItemName = (id: string | null) => {
     if (!id) return null;
-    return items.find(i => i.id === id)?.name || id;
+    return allItems.find(i => i.id === id)?.name || id;
   };
 
   const getStatusBadge = (status: FeedbackStatus) => {
@@ -116,8 +101,8 @@ const AdminFeedback = () => {
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-white pb-20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white mb-8 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Zurück
+        <Link to="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white mb-8 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Zurück zum Admin Panel
         </Link>
 
         <div className="flex items-center justify-between mb-8">
@@ -156,13 +141,9 @@ const AdminFeedback = () => {
             {filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
               const isExpanded = expandedId === fb.id;
               const msgs = messages[fb.id] || [];
-
               return (
                 <div key={fb.id} className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-lg">
-                  <button
-                    onClick={() => toggleExpand(fb.id)}
-                    className="w-full p-5 text-left hover:bg-[#333] transition-colors"
-                  >
+                  <button onClick={() => toggleExpand(fb.id)} className="w-full p-5 text-left hover:bg-[#333] transition-colors">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                       <div className="flex items-center gap-3">
                         <img src={`https://mc-heads.net/avatar/${fb.player_name}/24`} alt="" className="w-6 h-6 pixelated" />
@@ -191,25 +172,19 @@ const AdminFeedback = () => {
                       <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
                         {msgs.length === 0 ? (
                           <p className="text-gray-500 text-xs italic text-center py-4">Lade Nachrichten...</p>
-                        ) : (
-                          msgs.map(msg => {
-                            const isAdmin = msg.sender_type === 'admin';
-                            return (
-                              <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] px-3 py-2 text-sm ${
-                                  isAdmin
-                                    ? 'bg-green-900/20 border border-green-900/40 text-green-200'
-                                    : 'bg-[#333] border border-[#444] text-gray-200'
-                                }`}>
-                                  <p className="text-[9px] font-black uppercase mb-1 opacity-60">
-                                    {isAdmin ? 'Admin' : fb.player_name} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                  <p className="whitespace-pre-wrap">{msg.message}</p>
-                                </div>
+                        ) : msgs.map(msg => {
+                          const isAdmin = msg.sender_type === 'admin';
+                          return (
+                            <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] px-3 py-2 text-sm ${isAdmin ? 'bg-green-900/20 border border-green-900/40 text-green-200' : 'bg-[#333] border border-[#444] text-gray-200'}`}>
+                                <p className="text-[9px] font-black uppercase mb-1 opacity-60">
+                                  {isAdmin ? 'Admin' : fb.player_name} · {new Date(msg.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                                <p className="whitespace-pre-wrap">{msg.message}</p>
                               </div>
-                            );
-                          })
-                        )}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {closingId === fb.id && (
@@ -217,9 +192,7 @@ const AdminFeedback = () => {
                           <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Schließen als:</p>
                           <div className="flex gap-3">
                             {CLOSE_OPTIONS.map(opt => (
-                              <button key={opt.value} onClick={() => handleClose(fb, opt.value)} disabled={sending} className="mc-btn flex-1 text-sm disabled:opacity-50">
-                                {opt.label}
-                              </button>
+                              <button key={opt.value} onClick={() => handleClose(fb, opt.value)} disabled={sending} className="mc-btn flex-1 text-sm disabled:opacity-50">{opt.label}</button>
                             ))}
                             <button onClick={() => setClosingId(null)} className="mc-btn text-sm">Abbrechen</button>
                           </div>
@@ -229,26 +202,13 @@ const AdminFeedback = () => {
                       {!isClosed(fb.status) && closingId !== fb.id && (
                         <div className="p-3 border-t border-[#333]">
                           <div className="flex gap-2">
-                            <textarea
-                              value={replyText}
-                              onChange={e => setReplyText(e.target.value)}
-                              placeholder="Admin-Antwort schreiben..."
-                              className="mc-input bg-[#1a1a1a] flex-1 resize-none text-sm"
-                              rows={1}
-                            />
-                            <button
-                              onClick={() => handleReply(fb.id)}
-                              disabled={sending || !replyText.trim()}
-                              className="px-3 bg-green-700 hover:bg-green-600 text-white font-black disabled:opacity-50 transition-colors"
-                            >
+                            <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Admin-Antwort schreiben..." className="mc-input bg-[#1a1a1a] flex-1 resize-none text-sm" rows={1} />
+                            <button onClick={() => handleReply(fb.id)} disabled={sending || !replyText.trim()} className="px-3 bg-green-700 hover:bg-green-600 text-white font-black disabled:opacity-50 transition-colors">
                               <Send className="h-4 w-4" />
                             </button>
                           </div>
                           <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => setClosingId(fb.id)}
-                              className="mc-btn text-xs flex items-center gap-1 text-red-400 border-red-900/50"
-                            >
+                            <button onClick={() => setClosingId(fb.id)} className="mc-btn text-xs flex items-center gap-1 text-red-400 border-red-900/50">
                               <XCircle className="h-3 w-3" /> Schließen
                             </button>
                           </div>

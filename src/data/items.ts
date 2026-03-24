@@ -1,5 +1,3 @@
-import { getAllItems } from '@/api/client';
-
 export interface ShopListing {
   id: string | number;
   shopName: string;
@@ -12,25 +10,19 @@ export interface ShopListing {
 }
 
 export interface Item {
-  id: string;
-  name: string;
+  id: string;       // item_key
+  dbId: number;      // database id
+  name: string;      // display_name
   category: string;
   icon: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   marketPrice?: number;
+  isCustom?: boolean;
 }
 
 export const CATEGORIES = [
-  'Blöcke',
-  'Erze',
-  'Nahrung',
-  'Werkzeuge',
-  'Waffen',
-  'Rüstung',
-  'Tränke',
-  'Redstone',
-  'Farmgüter',
-  'Sonstiges',
+  'Blöcke', 'Erze', 'Nahrung', 'Werkzeuge', 'Waffen', 'Rüstung',
+  'Tränke', 'Redstone', 'Farmgüter', 'Sonstiges'
 ] as const;
 
 export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
@@ -40,13 +32,3 @@ export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
   epic: { text: 'Epic', cls: 'bg-[#2a1a3a] text-purple-400 border border-purple-900/50' },
   legendary: { text: 'Legendary', cls: 'bg-[#3a3a1a] text-yellow-400 border border-yellow-900/50' },
 };
-
-export async function fetchItems(): Promise<Item[]> {
-  return getAllItems();
-}
-
-/**
- * Fallback für alte Imports.
- * Wird nicht mehr aktiv verwendet.
- */
-export const items: Item[] = [];

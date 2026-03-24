@@ -1,34 +1,22 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingDown, TrendingUp, BarChart3, MapPin, MessageSquareWarning } from 'lucide-react';
-import { RARITY_LABELS, ShopListing, fetchItems, Item } from '@/data/items';
+import { RARITY_LABELS, ShopListing } from '@/data/items';
 import { getShopsForItem, recordPriceSnapshot } from '@/api/client';
-import TalerIcon from '@/components/TalerIcon';
+import { useItem } from '@/hooks/useItems';
+import TalerIcon from "@/components/TalerIcon";
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import FeedbackDialog from '@/components/FeedbackDialog';
 
 const ItemDetail = () => {
   const { itemId } = useParams<{ itemId: string }>();
+  const { item, isLoading: itemLoading } = useItem(itemId);
   const [shops, setShops] = useState<ShopListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [items, setItems] = useState<Item[]>([]);
-  const [loadingItems, setLoadingItems] = useState(true);
-
-  useEffect(() => {
-    fetchItems()
-      .then(data => setItems(data))
-      .catch(err => {
-        console.error('Fehler beim Laden der Items:', err);
-      })
-      .finally(() => setLoadingItems(false));
-  }, []);
-
-  const item = items.find(i => i.id === itemId);
 
   useEffect(() => {
     if (!item) return;
-
     setLoading(true);
     getShopsForItem(item.id)
       .then(apiShops => {
@@ -42,7 +30,6 @@ const ItemDetail = () => {
           createdAt: s.created_at?.split('T')[0] || '',
         }));
         setShops(mapped);
-
         if (mapped.length > 0) {
           const prices = mapped.map(s => s.price);
           recordPriceSnapshot(item.id, {
@@ -57,12 +44,10 @@ const ItemDetail = () => {
       .finally(() => setLoading(false));
   }, [item?.id]);
 
-  if (loadingItems) {
+  if (itemLoading) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <div className="mc-panel p-8 text-center">
-          <p className="text-lg text-white">Item wird geladen...</p>
-        </div>
+        <p className="text-gray-400 font-bold animate-pulse">Lade Item...</p>
       </div>
     );
   }
