@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import AdminFeedback from "./pages/AdminFeedback";
 import MyFeedback from "./pages/MyFeedback";
 import Requests from "./pages/Requests";
+import AuthSuccess from "./pages/AuthSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/feedback" element={<MyFeedback />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/admin/feedback" element={<AdminFeedback />} />
+            <Route path="/auth/success" element={<AuthSuccess />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

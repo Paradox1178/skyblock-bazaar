@@ -3,12 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Store, Plus, Trash2, Save, Package, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth, UserShopItem } from '@/context/AuthContext';
-import { DEFAULT_ITEMS } from '@/data/items';
+import { fetchItems, Item } from '@/data/items';
 import TalerIcon from '@/components/TalerIcon';
 import ItemSearchPicker from '@/components/ItemSearchPicker';
 
 const Settings = () => {
-  const { user, updateProfile, addItem, removeItem, updateItemPrice, logout } = useAuth();
+  const { user, loading, logout, updateProfile, addItem, removeItem, updateItemPrice } = useAuth();
   const navigate = useNavigate();
 
   const [shopName, setShopName] = useState(user?.shopName || '');
@@ -18,9 +18,28 @@ const Settings = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [itemsCatalog, setItemsCatalog] = useState<Item[]>([]);
+
+  useEffect(() => {
+    fetchItems()
+      .then(setItemsCatalog)
+      .catch(err => console.error('Fehler beim Laden der Items:', err));
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setShopName(user.shopName || '');
+      setShopCoordinates(user.shopCoordinates || '');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [loading, user, navigate]);
 
   if (!user) {
-    navigate('/');
     return null;
   }
 
@@ -78,8 +97,8 @@ const Settings = () => {
     toast.success('Profil gespeichert! ⛏️');
   };
 
-  const getItemName = (id: string) => DEFAULT_ITEMS.find(i => i.id === id)?.name || id;
-  const getItemIcon = (id: string) => DEFAULT_ITEMS.find(i => i.id === id)?.icon || '';
+  const getItemName = (id: string) => itemsCatalog.find(i => i.id === id)?.name || id;
+  const getItemIcon = (id: string) => itemsCatalog.find(i => i.id === id)?.icon || '';
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-white pb-20">
@@ -91,7 +110,6 @@ const Settings = () => {
           <ArrowLeft className="h-4 w-4" /> Zurück
         </Link>
 
-        {/* Profile Header */}
         <div className="flex items-center gap-4 mb-10">
           <img
             src={`https://mc-heads.net/avatar/${user.username}/64`}
@@ -104,7 +122,6 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Shop Settings */}
         <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[inset_3px_3px_0px_#3c3c3c] p-8 mb-8">
           <h2 className="text-xl font-black flex items-center gap-2 mb-6">
             <Store className="h-5 w-5 text-yellow-500" /> Shop Einstellungen
@@ -121,7 +138,6 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Shop Items */}
         <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[inset_3px_3px_0px_#3c3c3c] p-8 mb-8">
           <h2 className="text-xl font-black flex items-center gap-2 mb-6">
             <Package className="h-5 w-5 text-yellow-500" /> Deine Angebote ({items.length})
@@ -172,7 +188,10 @@ const Settings = () => {
                         value={editPrice}
                         onChange={e => setEditPrice(e.target.value)}
                         autoFocus
-                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveEdit();
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
                       />
                       <button onClick={saveEdit} className="text-green-400 hover:text-green-300 transition-colors">
                         <Check className="h-4 w-4" />
@@ -204,7 +223,6 @@ const Settings = () => {
           )}
         </div>
 
-        {/* Save / Logout */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button onClick={saveProfile} disabled={saving} className="mc-btn-primary flex-1 py-3 font-black flex items-center justify-center gap-2 disabled:opacity-50">
             <Save className="h-4 w-4" /> {saving ? 'Speichern...' : 'Profil speichern'}

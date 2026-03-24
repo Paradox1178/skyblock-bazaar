@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, Reply, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, RefreshCw, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllFeedback, updateFeedbackStatus, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
-import { DEFAULT_ITEMS } from '@/data/items';
+import { fetchItems, Item } from '@/data/items';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<FeedbackStatus, { label: string; color: string }> = {
@@ -35,6 +35,7 @@ const AdminFeedback = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Record<number, ApiFeedbackMessage[]>>({});
   const [replyText, setReplyText] = useState('');
+  const [items, setItems] = useState<Item[]>([]);
 
   const load = () => {
     setLoading(true);
@@ -44,7 +45,12 @@ const AdminFeedback = () => {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetchItems()
+      .then(setItems)
+      .catch(err => console.error('Fehler beim Laden der Items:', err));
+  }, []);
 
   const loadMessages = async (feedbackId: number) => {
     try {
@@ -96,7 +102,7 @@ const AdminFeedback = () => {
 
   const getItemName = (id: string | null) => {
     if (!id) return null;
-    return DEFAULT_ITEMS.find(i => i.id === id)?.name || id;
+    return items.find(i => i.id === id)?.name || id;
   };
 
   const getStatusBadge = (status: FeedbackStatus) => {
@@ -123,7 +129,6 @@ const AdminFeedback = () => {
           </button>
         </div>
 
-        {/* Filter */}
         <div className="flex flex-wrap gap-2 mb-6">
           <button onClick={() => setFilter('alle')} className={`mc-category ${filter === 'alle' ? 'mc-category-active' : ''}`}>
             Alle ({feedbacks.length})
@@ -154,7 +159,6 @@ const AdminFeedback = () => {
 
               return (
                 <div key={fb.id} className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-lg">
-                  {/* Header */}
                   <button
                     onClick={() => toggleExpand(fb.id)}
                     className="w-full p-5 text-left hover:bg-[#333] transition-colors"
@@ -182,7 +186,6 @@ const AdminFeedback = () => {
                     </div>
                   </button>
 
-                  {/* Expanded chat */}
                   {isExpanded && (
                     <div className="border-t border-[#333]">
                       <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
@@ -209,7 +212,6 @@ const AdminFeedback = () => {
                         )}
                       </div>
 
-                      {/* Close sub-options */}
                       {closingId === fb.id && (
                         <div className="p-4 border-t border-[#333] bg-black/20">
                           <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Schließen als:</p>
@@ -224,7 +226,6 @@ const AdminFeedback = () => {
                         </div>
                       )}
 
-                      {/* Reply + actions */}
                       {!isClosed(fb.status) && closingId !== fb.id && (
                         <div className="p-3 border-t border-[#333]">
                           <div className="flex gap-2">

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { DEFAULT_ITEMS, Item } from '@/data/items';
+import { fetchItems, Item } from '@/data/items';
 
 interface ItemSearchPickerProps {
   value: string;
@@ -9,19 +9,33 @@ interface ItemSearchPickerProps {
   placeholder?: string;
 }
 
-const ItemSearchPicker = ({ value, onChange, excludeIds = [], placeholder = 'Item suchen...' }: ItemSearchPickerProps) => {
+const ItemSearchPicker = ({
+  value,
+  onChange,
+  excludeIds = [],
+  placeholder = 'Item suchen...',
+}: ItemSearchPickerProps) => {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
-  const selectedItem = DEFAULT_ITEMS.find(i => i.id === value);
+  useEffect(() => {
+    fetchItems()
+      .then(setItems)
+      .catch(err => {
+        console.error('Fehler beim Laden der Items:', err);
+      });
+  }, []);
+
+  const selectedItem = items.find(i => i.id === value);
 
   const results = search.trim().length > 0
-    ? DEFAULT_ITEMS
+    ? items
         .filter(i => !excludeIds.includes(i.id))
         .filter(i => i.name.toLowerCase().includes(search.toLowerCase()))
         .slice(0, 8)
-    : DEFAULT_ITEMS
+    : items
         .filter(i => !excludeIds.includes(i.id))
         .slice(0, 8);
 
@@ -44,7 +58,10 @@ const ItemSearchPicker = ({ value, onChange, excludeIds = [], placeholder = 'Ite
       {selectedItem && !open ? (
         <button
           type="button"
-          onClick={() => { setOpen(true); setSearch(''); }}
+          onClick={() => {
+            setOpen(true);
+            setSearch('');
+          }}
           className="mc-input bg-[#1a1a1a] w-full flex items-center gap-3 text-left cursor-pointer"
         >
           <div className="mc-item-slot bg-[#373737] w-8 h-8 shrink-0">
@@ -60,7 +77,10 @@ const ItemSearchPicker = ({ value, onChange, excludeIds = [], placeholder = 'Ite
             type="text"
             className="mc-input bg-[#1a1a1a] w-full pl-9"
             value={search}
-            onChange={e => { setSearch(e.target.value); setOpen(true); }}
+            onChange={e => {
+              setSearch(e.target.value);
+              setOpen(true);
+            }}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             autoFocus={open}

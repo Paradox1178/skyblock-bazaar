@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Package, FilterX, LayoutGrid } from 'lucide-react';
 import ItemCard from '@/components/ItemCard';
-import { DEFAULT_ITEMS, CATEGORIES } from '@/data/items';
+import { fetchItems, Item, CATEGORIES } from '@/data/items';
 
 const ITEMS_PER_PAGE = 60; // Verhindert Lag bei 1252 Items
 
 const Items = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [items, setItems] = useState<Item[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
   const category = searchParams.get('category') || 'Alle';
 
   const setCategory = (cat: string) => {
@@ -31,7 +33,7 @@ const Items = () => {
 
   // Gefilterte Liste mit Performance-Optimierung
   const { filteredItems, totalCount, hasMore } = useMemo(() => {
-    const allFiltered = DEFAULT_ITEMS.filter(item => {
+    const allFiltered = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = category === 'Alle' || item.category === category;
       return matchesSearch && matchesCategory;
@@ -57,7 +59,7 @@ const Items = () => {
               </h1>
               <p className="text-gray-400 text-sm mt-2 font-medium flex items-center gap-2">
                 <LayoutGrid className="h-4 w-4" />
-                Durchsuche {DEFAULT_ITEMS.length} Minecraft Items
+                Durchsuche {items.length} Minecraft Items
               </p>
             </div>
 

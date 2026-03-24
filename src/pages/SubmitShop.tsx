@@ -1,17 +1,23 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Store, Info } from 'lucide-react';
-import { DEFAULT_ITEMS } from '@/data/items';
-import ItemSearchPicker from '@/components/ItemSearchPicker';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchItems, Item } from '@/data/items';
 
 const SubmitShop = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [itemId, setItemId] = useState('');
+  const [items, setItems] = useState<Item[]>([]);
 
-  const selectedItem = DEFAULT_ITEMS.find(i => i.id === itemId);
+  useEffect(() => {
+    fetchItems()
+      .then(setItems)
+      .catch(err => console.error('Fehler beim Laden der Items:', err));
+  }, []);
+
+  const selectedItem = items.find(i => i.id === itemId);
 
   const handleSubmit = () => {
     if (!user) {
@@ -47,13 +53,18 @@ const SubmitShop = () => {
             <Info className="h-10 w-10 text-yellow-500 mb-4" />
             <h3 className="text-lg font-black text-white mb-2">So funktioniert's</h3>
             <p className="text-gray-400 text-sm text-center max-w-sm">
-              Shops werden jetzt über dein <span className="text-yellow-500 font-bold">Profil</span> verwaltet. 
+              Shops werden jetzt über dein <span className="text-yellow-500 font-bold">Profil</span> verwaltet.
               Melde dich an, geh in die Einstellungen und füge dort deine Items hinzu.
             </p>
+            {selectedItem && (
+              <p className="text-xs text-gray-500 mt-3">
+                Zuletzt geladenes Item-Beispiel: {selectedItem.name}
+              </p>
+            )}
           </div>
 
-          <button 
-            onClick={handleSubmit} 
+          <button
+            onClick={handleSubmit}
             className="mc-category-active w-full py-4 text-lg font-black transition-transform active:scale-95 shadow-[4px_4px_0px_#1a3a1a]"
           >
             {user ? '⚙️ ZU DEN EINSTELLUNGEN' : '🔑 ERST ANMELDEN'}

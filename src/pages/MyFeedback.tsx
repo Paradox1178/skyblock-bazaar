@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getPlayerFeedback, ApiFeedback, FeedbackStatus, getFeedbackMessages, sendFeedbackReply, ApiFeedbackMessage } from '@/api/client';
-import { DEFAULT_ITEMS } from '@/data/items';
+import { fetchItems, Item } from '@/data/items';
 import { Textarea } from '@/components/ui/textarea';
 
 const STATUS_MAP: Record<FeedbackStatus, { label: string; color: string }> = {
@@ -17,23 +17,30 @@ const STATUS_MAP: Record<FeedbackStatus, { label: string; color: string }> = {
 const CLOSED_STATUSES: FeedbackStatus[] = ['geaendert', 'kein_fehler'];
 
 const MyFeedback = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState<ApiFeedback[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Record<number, ApiFeedbackMessage[]>>({});
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
 
   const loadFeedbacks = () => {
     if (!user) return;
-    setLoading(true);
+    setLoadingFeedbacks(true);
     getPlayerFeedback(user.id)
       .then(setFeedbacks)
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingFeedbacks(false));
   };
+
+  useEffect(() => {
+    fetchItems()
+      .then(setItems)
+      .catch(err => console.error('Fehler beim Laden der Items:', err));
+  }, []);
 
   useEffect(() => {
     loadFeedbacks();
@@ -56,8 +63,13 @@ const MyFeedback = () => {
     setReplyText('');
   };
 
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [loading, user, navigate]);
+
   if (!user) {
-    navigate('/');
     return null;
   }
 
@@ -84,7 +96,7 @@ const MyFeedback = () => {
           <MessageSquare className="h-8 w-8 text-yellow-500" /> Meine Meldungen ({feedbacks.length})
         </h1>
 
-        {loading ? (
+        {loadingFeedbacks ? (
           <p className="text-gray-400 animate-pulse text-sm">Lade...</p>
         ) : feedbacks.length === 0 ? (
           <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] p-16 text-center">
@@ -94,14 +106,13 @@ const MyFeedback = () => {
           <div className="space-y-3">
             {feedbacks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(fb => {
               const s = STATUS_MAP[fb.status];
-              const itemName = fb.item_id ? (DEFAULT_ITEMS.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
+              const itemName = fb.item_id ? (items.find(i => i.id === fb.item_id)?.name || fb.item_id) : null;
               const isExpanded = expandedId === fb.id;
               const isClosed = CLOSED_STATUSES.includes(fb.status);
               const msgs = messages[fb.id] || [];
 
               return (
                 <div key={fb.id} className={`bg-[#2a2a2a] border-2 ${fb.status === 'beantwortet' ? 'border-yellow-600' : 'border-[#1e1e1e]'}`}>
-                  {/* Header */}
                   <button
                     onClick={() => toggleExpand(fb.id)}
                     className="w-full p-4 text-left flex items-center justify-between hover:bg-[#333] transition-colors"
@@ -117,7 +128,6 @@ const MyFeedback = () => {
                     </div>
                   </button>
 
-                  {/* Chat view */}
                   {isExpanded && (
                     <div className="border-t border-[#333]">
                       <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
@@ -144,7 +154,6 @@ const MyFeedback = () => {
                         )}
                       </div>
 
-                      {/* Reply input */}
                       {!isClosed && (
                         <div className="p-3 border-t border-[#333] flex gap-2">
                           <Textarea

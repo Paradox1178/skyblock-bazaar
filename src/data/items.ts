@@ -1,4 +1,4 @@
-import rawItems from './minecraft_items.json';
+import { getAllItems } from '@/api/client';
 
 export interface ShopListing {
   id: string | number;
@@ -21,8 +21,16 @@ export interface Item {
 }
 
 export const CATEGORIES = [
-  'Blöcke', 'Erze', 'Nahrung', 'Werkzeuge', 'Waffen', 'Rüstung',
-  'Tränke', 'Redstone', 'Farmgüter', 'Sonstiges'
+  'Blöcke',
+  'Erze',
+  'Nahrung',
+  'Werkzeuge',
+  'Waffen',
+  'Rüstung',
+  'Tränke',
+  'Redstone',
+  'Farmgüter',
+  'Sonstiges',
 ] as const;
 
 export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
@@ -33,4 +41,12 @@ export const RARITY_LABELS: Record<string, { text: string; cls: string }> = {
   legendary: { text: 'Legendary', cls: 'bg-[#3a3a1a] text-yellow-400 border border-yellow-900/50' },
 };
 
-export const DEFAULT_ITEMS: Item[] = rawItems as Item[];
+export async function fetchItems(): Promise<Item[]> {
+  return getAllItems();
+}
+
+/**
+ * Fallback für alte Imports.
+ * Wird nicht mehr aktiv verwendet.
+ */
+export const items: Item[] = [];

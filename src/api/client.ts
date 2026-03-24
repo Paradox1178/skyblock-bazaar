@@ -3,35 +3,61 @@ const API_BASE = 'https://api.dev-dave.de/api';
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
   });
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(error.error || `Request failed: ${res.status}`);
   }
-  return res.json();
+
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+
+  return {} as T;
 }
 
-// === PLAYER ===
+// === AUTH ===
 
 export interface ApiPlayer {
   id: number;
   username: string;
   shop_name: string | null;
   shop_coordinates: string | null;
-  joined_at: string;
+  created_at?: string;
+  joined_at?: string;
   shopItems: { item_id: string; price: number }[];
 }
 
-export function loginPlayer(username: string): Promise<ApiPlayer> {
-  return request('/players/login', {
+export interface ApiAuthMeResponse {
+  authenticated: boolean;
+  player?: ApiPlayer;
+}
+
+export function getCurrentAuth(): Promise<ApiAuthMeResponse> {
+  return request('/auth/me');
+}
+
+export function exchangeDevLoginToken(loginToken: string): Promise<ApiAuthMeResponse> {
+  return request('/auth/dev-exchange', {
     method: 'POST',
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ loginToken }),
   });
 }
+
+export function logoutPlayer(): Promise<{ success: boolean }> {
+  return request('/auth/logout', {
+    method: 'POST',
+  });
+}
+
+// === PLAYER ===
 
 export function updatePlayer(
   id: number,
@@ -113,7 +139,12 @@ export function recordPriceSnapshot(
 
 // === FEEDBACK ===
 
-export type FeedbackStatus = 'eingereicht' | 'gesehen' | 'beantwortet' | 'geaendert' | 'kein_fehler';
+export type FeedbackStatus =
+  | 'eingereicht'
+  | 'gesehen'
+  | 'beantwortet'
+  | 'geaendert'
+  | 'kein_fehler';
 
 export interface ApiFeedback {
   id: number;
@@ -184,7 +215,7 @@ export function sendFeedbackReply(
   });
 }
 
-// === REQUESTS (Ersuchen) ===
+// === REQUESTS ===
 
 export interface ApiRequest {
   id: number;
@@ -210,6 +241,35 @@ export function createRequest(
   });
 }
 
+export interface ApiItem {
+  id: string;
+  name: string;
+  category: string;
+  icon: string;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  marketPrice?: number;
+}
+
+export function getAllItems(): Promise<ApiItem[]> {
+  return request('/items');
+}
+
+export function getItembyId(itemId: string): Promise<ApiItem> {
+  return request(`/items/${itemId}`);
+}
+
+export function updateRequest(
+  requestId: number,
+  data: { title?: string; description?: string }
+): Promise<{ success: boolean }> {
+  return request(`/requests/${requestId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export function deleteRequest(requestId: number): Promise<{ success: boolean }> {
-  return request(`/requests/${requestId}`, { method: 'DELETE' });
+  return request(`/requests/${requestId}`, {
+    method: 'DELETE',
+  });
 }

@@ -1,21 +1,34 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingDown, TrendingUp, BarChart3, MapPin, MessageSquareWarning } from 'lucide-react';
-import { DEFAULT_ITEMS, RARITY_LABELS, ShopListing } from '@/data/items';
+import { RARITY_LABELS, ShopListing, fetchItems, Item } from '@/data/items';
 import { getShopsForItem, recordPriceSnapshot } from '@/api/client';
-import TalerIcon from "@/components/TalerIcon";
+import TalerIcon from '@/components/TalerIcon';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import FeedbackDialog from '@/components/FeedbackDialog';
 
 const ItemDetail = () => {
   const { itemId } = useParams<{ itemId: string }>();
-  const item = DEFAULT_ITEMS.find(i => i.id === itemId);
   const [shops, setShops] = useState<ShopListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
+
+  useEffect(() => {
+    fetchItems()
+      .then(data => setItems(data))
+      .catch(err => {
+        console.error('Fehler beim Laden der Items:', err);
+      })
+      .finally(() => setLoadingItems(false));
+  }, []);
+
+  const item = items.find(i => i.id === itemId);
 
   useEffect(() => {
     if (!item) return;
+
     setLoading(true);
     getShopsForItem(item.id)
       .then(apiShops => {
@@ -30,7 +43,6 @@ const ItemDetail = () => {
         }));
         setShops(mapped);
 
-        // Record price snapshot
         if (mapped.length > 0) {
           const prices = mapped.map(s => s.price);
           recordPriceSnapshot(item.id, {
@@ -44,6 +56,16 @@ const ItemDetail = () => {
       .catch(() => setShops([]))
       .finally(() => setLoading(false));
   }, [item?.id]);
+
+  if (loadingItems) {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <div className="mc-panel p-8 text-center">
+          <p className="text-lg text-white">Item wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!item) {
     return (
@@ -69,7 +91,6 @@ const ItemDetail = () => {
           <ArrowLeft className="h-4 w-4" /> Zurück zum Katalog
         </Link>
 
-        {/* Item Header */}
         <div className="bg-[#2a2a2a] border-2 border-[#1e1e1e] shadow-[inset_3px_3px_0px_#3c3c3c] p-8 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <div className="mc-item-slot bg-[#373737] border-2 border-[#1e1e1e] shadow-[inset_2px_2px_0px_#212121]" style={{ width: 100, height: 100 }}>
@@ -130,12 +151,10 @@ const ItemDetail = () => {
           </div>
         </div>
 
-        {/* Price History */}
         <div className="mb-8">
           <PriceHistoryChart itemId={item.id} />
         </div>
 
-        {/* Shop Listings */}
         <div className="flex items-center justify-between mb-6 px-1 border-l-4 border-yellow-600 pl-4">
           <h2 className="text-2xl font-bold uppercase tracking-widest text-white">
             Verfügbare Shops <span className="text-gray-500 ml-2">({shops.length})</span>
@@ -158,7 +177,7 @@ const ItemDetail = () => {
                     <h3 className="font-black text-white text-xl leading-tight">{shop.shopName}</h3>
                     <div className="flex flex-wrap gap-x-6 mt-2 text-sm font-bold">
                       <span className="text-gray-400 flex items-center gap-2">
-                        Verkäufer: 
+                        Verkäufer:
                         <span className="text-white flex items-center gap-1">
                           <img src={`https://mc-heads.net/avatar/${shop.ownerName}/16`} alt="" className="w-4 h-4 pixelated" />
                           {shop.ownerName}
@@ -193,7 +212,6 @@ const ItemDetail = () => {
           </div>
         )}
 
-        {/* Feedback Button */}
         <div className="mt-8 text-center">
           <button
             onClick={() => setShowFeedback(true)}
