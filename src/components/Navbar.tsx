@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare } from 'lucide-react';
+import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare, ScrollText } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, DEFAULT_ITEMS } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
