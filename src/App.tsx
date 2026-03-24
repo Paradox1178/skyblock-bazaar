@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import AdminFeedback from "./pages/AdminFeedback";
 import MyFeedback from "./pages/MyFeedback";
 import Requests from "./pages/Requests";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/feedback" element={<MyFeedback />} />
             <Route path="/requests" element={<Requests />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/admin/feedback" element={<AdminFeedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
