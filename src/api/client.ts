@@ -183,3 +183,33 @@ export function sendFeedbackReply(
     body: JSON.stringify({ sender_type: senderType, message, player_id: playerId }),
   });
 }
+
+// === REQUESTS (Ersuchen) ===
+
+export interface ApiRequest {
+  id: number;
+  player_id: number;
+  player_name: string;
+  title: string;
+  description: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export function getAllRequests(): Promise<ApiRequest[]> {
+  return request('/requests');
+}
+
+export function createRequest(
+  playerId: number,
+  data: { title: string; description: string }
+): Promise<{ success: boolean; id: number }> {
+  return request('/requests', {
+    method: 'POST',
+    body: JSON.stringify({ player_id: playerId, ...data }),
+  });
+}
+
+export function deleteRequest(requestId: number): Promise<{ success: boolean }> {
+  return request(`/requests/${requestId}`, { method: 'DELETE' });
+}

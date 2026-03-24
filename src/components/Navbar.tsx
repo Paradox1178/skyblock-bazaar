@@ -112,6 +112,10 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <Link to="/requests" className="mc-btn flex items-center gap-1.5 active:translate-y-0.5">
+                <ScrollText className="h-4 w-4" />
+                <span className="hidden sm:inline">Ersuchen</span>
+              </Link>
               <Link to="/submit" className="mc-btn-accent flex items-center gap-1.5 active:translate-y-0.5">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Shop eintragen</span>
