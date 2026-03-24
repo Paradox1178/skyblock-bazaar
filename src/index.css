@@ -157,20 +157,6 @@
     border-right-color: hsl(100 40% 22%);
   }
 
-  .mc-btn-danger {
-    @apply mc-btn;
-    background-color: hsl(var(--destructive));
-    color: hsl(var(--destructive-foreground));
-    border-top-color: hsl(0 60% 55%);
-    border-left-color: hsl(0 60% 55%);
-    border-bottom-color: hsl(0 60% 30%);
-    border-right-color: hsl(0 60% 30%);
-  }
-
-  .mc-btn-danger:hover {
-    background-color: hsl(0 84% 52%);
-  }
-
   .mc-btn-primary:hover {
     background-color: hsl(100 40% 40%);
   }

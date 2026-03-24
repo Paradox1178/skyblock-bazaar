@@ -1,59 +1,37 @@
 const API_BASE = 'https://api.dev-dave.de/api';
-// Für Produktion später z. B.:
-// const API_BASE = 'https://api.dev-dave.de/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
   });
-
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(error.error || `Request failed: ${res.status}`);
   }
-
-  // Manche Endpoints könnten später leer antworten
-  const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return res.json();
-  }
-
-  return {} as T;
+  return res.json();
 }
 
-// === AUTH ===
+// === PLAYER ===
 
 export interface ApiPlayer {
   id: number;
   username: string;
   shop_name: string | null;
   shop_coordinates: string | null;
-  created_at?: string;
-  joined_at?: string;
+  joined_at: string;
   shopItems: { item_id: string; price: number }[];
 }
 
-export interface ApiAuthMeResponse {
-  authenticated: boolean;
-  player?: ApiPlayer;
-}
-
-export function getCurrentAuth(): Promise<ApiAuthMeResponse> {
-  return request('/auth/me');
-}
-
-export function logoutPlayer(): Promise<{ success: boolean }> {
-  return request('/auth/logout', {
+export function loginPlayer(username: string): Promise<ApiPlayer> {
+  return request('/players/login', {
     method: 'POST',
+    body: JSON.stringify({ username }),
   });
 }
-
-// === PLAYER ===
 
 export function updatePlayer(
   id: number,
@@ -135,12 +113,7 @@ export function recordPriceSnapshot(
 
 // === FEEDBACK ===
 
-export type FeedbackStatus =
-  | 'eingereicht'
-  | 'gesehen'
-  | 'beantwortet'
-  | 'geaendert'
-  | 'kein_fehler';
+export type FeedbackStatus = 'eingereicht' | 'gesehen' | 'beantwortet' | 'geaendert' | 'kein_fehler';
 
 export interface ApiFeedback {
   id: number;
@@ -209,4 +182,34 @@ export function sendFeedbackReply(
     method: 'POST',
     body: JSON.stringify({ sender_type: senderType, message, player_id: playerId }),
   });
+}
+
+// === REQUESTS (Ersuchen) ===
+
+export interface ApiRequest {
+  id: number;
+  player_id: number;
+  player_name: string;
+  title: string;
+  description: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export function getAllRequests(): Promise<ApiRequest[]> {
+  return request('/requests');
+}
+
+export function createRequest(
+  playerId: number,
+  data: { title: string; description: string }
+): Promise<{ success: boolean; id: number }> {
+  return request('/requests', {
+    method: 'POST',
+    body: JSON.stringify({ player_id: playerId, ...data }),
+  });
+}
+
+export function deleteRequest(requestId: number): Promise<{ success: boolean }> {
+  return request(`/requests/${requestId}`, { method: 'DELETE' });
 }

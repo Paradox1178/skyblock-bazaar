@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare } from 'lucide-react';
+import { Search, Plus, Store, Settings, LogIn, LogOut, MessageSquare, ScrollText } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, DEFAULT_ITEMS } from '@/data/items';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +9,7 @@ import LoginDialog from '@/components/LoginDialog';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, loading } = useAuth();
+  const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -18,10 +18,10 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const results = search.trim().length > 1
+  const results = search.trim().length > 1 
     ? DEFAULT_ITEMS
-      .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 5)
+        .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+        .slice(0, 5)
     : [];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -50,7 +50,7 @@ const Navbar = () => {
     if (!user) { setUnreadCount(0); return; }
     getPlayerUnreadFeedbackCount(user.id)
       .then(r => setUnreadCount(r.count))
-      .catch(() => { });
+      .catch(() => {});
   }, [user, location.pathname]);
 
   return (
@@ -112,16 +112,16 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <Link to="/requests" className="mc-btn flex items-center gap-1.5 active:translate-y-0.5">
+                <ScrollText className="h-4 w-4" />
+                <span className="hidden sm:inline">Ersuchen</span>
+              </Link>
               <Link to="/submit" className="mc-btn-accent flex items-center gap-1.5 active:translate-y-0.5">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Shop eintragen</span>
               </Link>
 
-              {loading ? (
-                <div className="mc-btn opacity-70">
-                  <span className="hidden sm:inline">Lade...</span>
-                </div>
-              ) : user ? (
+              {user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -157,10 +157,7 @@ const Navbar = () => {
                         )}
                       </Link>
                       <button
-                        onClick={async () => {
-                          await logout();
-                          setShowUserMenu(false);
-                        }}
+                        onClick={() => { logout(); setShowUserMenu(false); }}
                         className="flex items-center gap-2 p-3 hover:bg-[#323232] text-red-400 text-sm font-bold w-full text-left transition-colors border-t border-black/20"
                       >
                         <LogOut className="h-4 w-4" /> Abmelden
